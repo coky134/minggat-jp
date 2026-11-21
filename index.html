@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html lang="id" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MinggatJP — Asisten Barang Bawaan & Bea Cukai Jepang</title>
+    
+    <!-- Google Fonts: Plus Jakarta Sans & Noto Sans JP -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- HTML5-QRCode Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', '"Noto Sans JP"', 'sans-serif'],
+                        jp: ['"Noto Sans JP"', 'sans-serif'],
+                    },
+                    colors: {
+                        sakura: {
+                            50: '#fff1f2',
+                            100: '#ffe4e6',
+                            500: '#f43f5e',
+                            600: '#e11d48',
+                        },
+                        indigojp: {
+                            900: '#1e1b4b',
+                            950: '#0f172a',
+                        }
+                    },
+                    boxShadow: {
+                        'bento': '0 4px 24px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03)',
+                        'bento-dark': '0 4px 24px -2px rgba(0, 0, 0, 0.35), 0 2px 6px -1px rgba(0, 0, 0, 0.25)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Subtle Japanese Seigaiha / Washi Texture & Glassmorphism */
+        body {
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .glass-card {
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .bento-transition {
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .bento-transition:hover {
+            transform: translateY(-2px);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.4);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.6);
+        }
+        /* Hide default html5-qrcode ugly borders */
+        #reader {
+            border: none !important;
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+        #reader video {
+            border-radius: 1rem;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 min-h-screen antialiased selection:bg-rose-500 selection:text-white">
+
+    <!-- Background Ambient Glow -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+        <div class="absolute -top-32 -right-32 w-96 h-96 bg-rose-400/10 dark:bg-rose-500/10 rounded-full blur-3xl"></div>
+        <div class="absolute top-1/3 -left-32 w-96 h-96 bg-indigo-400/10 dark:bg-indigo-500/10 rounded-full blur-3xl"></div>
+    </div>
+
+    <!-- Custom Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-30 glass-card bg-white/80 dark:bg-slate-900/80 border-b border-slate-200/70 dark:border-slate-800/70">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            <!-- Brand Logo -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-rose-500 to-rose-600 flex items-center justify-center text-white shadow-lg shadow-rose-500/25 shrink-0">
+                    <span class="font-jp font-bold text-lg">旅</span>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-bold text-lg tracking-tight text-slate-900 dark:text-white">Minggat<span class="text-rose-500">JP</span></h1>
+                        <span id="sync-badge" class="hidden sm:inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                            Mode Tamu (Lokal)
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">Asisten Packing & Pemeriksaan Bea Cukai Jepang</p>
+                </div>
+            </div>
+
+            <!-- Right Actions -->
+            <div class="flex items-center gap-2">
+                <!-- Firebase Settings Button -->
+                <button onclick="openModal('firebase-modal')" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors" title="Pengaturan Cloud Firebase">
+                    <i data-lucide="database" class="w-4 h-4 text-indigo-500"></i>
+                    <span class="hidden md:inline">Cloud Config</span>
+                </button>
+
+                <!-- Auth User Pill / Login Button -->
+                <div id="auth-header-area">
+                    <button onclick="openModal('auth-modal')" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 transition-colors shadow-sm">
+                        <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
+                        <span>Masuk / Akun</span>
+                    </button>
+                </div>
+
+                <!-- Theme Toggle -->
+                <button onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors" aria-label="Ganti Tema">
+                    <i data-lucide="moon" class="w-4 h-4 block dark:hidden"></i>
+                    <i data-lucide="sun" class="w-4 h-4 hidden dark:block text-amber-400"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+        
+        <!-- Bento Top Grid: Readiness Progress + Stats + Quick Customs Guide -->
+        <section class="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-5">
+            
+            <!-- Readiness Progress Card (5 Cols) -->
+            <div class="md:col-span-5 bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-bento dark:shadow-bento-dark flex flex-col justify-between">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <span class="text-xs font-semibold uppercase tracking-wider text-rose-500">Kesiapan Keberangkatan</span>
+                        <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">Persiapan ke Jepang</h2>
+                        <p id="readiness-subtitle" class="text-xs text-slate-500 dark:text-slate-400 mt-1">Mulai tambahkan atau pindai barang bawaan Anda.</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-100 dark:border-rose-900/50 flex items-center justify-center text-rose-500 shrink-0">
+                        <i data-lucide="plane-takeoff" class="w-6 h-6"></i>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <div class="flex items-end justify-between mb-2">
+                        <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Progress Kemasan</span>
+                        <span id="progress-percent" class="text-2xl font-extrabold text-slate-900 dark:text-white">0%</span>
+                    </div>
+                    <div class="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden p-0.5">
+                        <div id="progress-bar" class="h-full bg-gradient-to-r from-rose-500 to-indigo-600 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3 Mini Metric Bento Cards (4 Cols) -->
+            <div class="md:col-span-4 grid grid-cols-3 md:grid-cols-1 gap-3 sm:gap-4">
+                <!-- Total Items -->
+                <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 shadow-bento dark:shadow-bento-dark flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                            <i data-lucide="luggage" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total Barang</p>
+                            <p id="stat-total" class="text-lg font-bold text-slate-900 dark:text-white leading-tight">0</p>
+                        </div>
+                    </div>
+                    <span class="hidden md:inline-block text-[11px] text-slate-400">Item terdaftar</span>
+                </div>
+
+                <!-- Packed Items -->
+                <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 shadow-bento dark:shadow-bento-dark flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Sudah Dikemas</p>
+                            <p id="stat-packed" class="text-lg font-bold text-emerald-600 dark:text-emerald-400 leading-tight">0</p>
+                        </div>
+                    </div>
+                    <span class="hidden md:inline-block text-[11px] text-slate-400">Siap masuk tas</span>
+                </div>
+
+                <!-- Customs Warning Items -->
+                <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 shadow-bento dark:shadow-bento-dark flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+                            <i data-lucide="shield-alert" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Perlu Perhatian</p>
+                            <p id="stat-warning" class="text-lg font-bold text-rose-600 dark:text-rose-400 leading-tight">0</p>
+                        </div>
+                    </div>
+                    <span class="hidden md:inline-block text-[11px] text-slate-400">Aturan Bea Cukai</span>
+                </div>
+            </div>
+
+            <!-- Action Quick Bento Card (3 Cols) -->
+            <div class="md:col-span-3 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 shadow-bento flex flex-col justify-between relative overflow-hidden">
+                <div class="absolute -right-6 -bottom-6 opacity-10 pointer-events-none">
+                    <span class="font-jp text-8xl font-bold">税関</span>
+                </div>
+                <div>
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 text-rose-300 text-[11px] font-semibold mb-3">
+                        <i data-lucide="scan-barcode" class="w-3.5 h-3.5"></i>
+                        <span>Smart Customs Scan</span>
+                    </div>
+                    <h3 class="font-bold text-base leading-snug">Cek Produk Makanan & Minuman</h3>
+                    <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">Pindai barcode kemasan untuk memeriksa kandungan daging, buah, atau batas cairan sebelum terbang ke Jepang.</p>
+                </div>
+
+                <button onclick="openScannerModal()" class="mt-5 w-full py-3 px-4 rounded-2xl bg-rose-500 hover:bg-rose-600 active:scale-[0.98] text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-lg shadow-rose-500/30 transition-all">
+                    <i data-lucide="camera" class="w-4 h-4"></i>
+                    <span>Scan Barcode Sekarang</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Main Workspace Grid: Left Input Form + Right Checklist -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- Left Column: Manual Input & Customs Live Checker (4 Cols) -->
+            <div class="lg:col-span-4 space-y-5 lg:sticky lg:top-24">
+                <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-bento dark:shadow-bento-dark">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-500 flex items-center justify-center">
+                                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                            </div>
+                            <h2 id="form-title" class="font-bold text-base text-slate-900 dark:text-white">Tambah Barang Manual</h2>
+                        </div>
+                        <button type="button" id="cancel-edit-btn" onclick="resetForm()" class="hidden text-xs font-medium text-slate-400 hover:text-rose-500">
+                            Batal Edit
+                        </button>
+                    </div>
+
+                    <form id="item-form" onsubmit="handleSaveItem(event)" class="space-y-4">
+                        <input type="hidden" id="item-id" value="">
+                        <input type="hidden" id="item-image" value="">
+                        <input type="hidden" id="item-barcode" value="">
+
+                        <!-- Item Name -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Nama Barang / Produk <span class="text-rose-500">*</span></label>
+                            <div class="relative">
+                                <input type="text" id="item-name" required placeholder="Contoh: Paspor, Rendang Kemasan, Powerbank..." 
+                                    oninput="liveCheckCustoms(this.value)"
+                                    class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-500 transition-all">
+                            </div>
+                        </div>
+
+                        <!-- Live Customs Alert Box -->
+                        <div id="live-customs-alert" class="hidden rounded-2xl p-3.5 text-xs border transition-all">
+                            <div class="flex items-start gap-2.5">
+                                <i id="live-customs-icon" data-lucide="alert-triangle" class="w-4 h-4 shrink-0 mt-0.5"></i>
+                                <div>
+                                    <p id="live-customs-title" class="font-bold"></p>
+                                    <p id="live-customs-desc" class="mt-0.5 leading-relaxed opacity-90"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Category & Quantity -->
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Kategori</label>
+                                <select id="item-category" onchange="liveCheckCustoms(document.getElementById('item-name').value)"
+                                    class="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-500">
+                                    <option value="Makanan & Minuman">🍱 Makanan & Minuman</option>
+                                    <option value="Dokumen & Paspor">🛂 Dokumen & Paspor</option>
+                                    <option value="Pakaian">🧥 Pakaian</option>
+                                    <option value="Elektronik">🔌 Elektronik</option>
+                                    <option value="Obat-obatan">💊 Obat-obatan</option>
+                                    <option value="Lainnya">🎒 Lainnya</option>
+                                </select>
+                            </div>
+
+                            <!-- Quantity Stepper & Unit Type (Pcs vs Pack) -->
+                            <div>
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Jumlah & Jenis Satuan</label>
+                                    <span class="text-[11px] text-slate-400">Satuan / Per Pack</span>
+                                </div>
+                                <div class="grid grid-cols-12 gap-2.5 items-center">
+                                    <!-- Stepper (- / Input / +) -->
+                                    <div class="col-span-6 flex items-center rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-1">
+                                        <button type="button" onclick="adjustFormQty(-1)" aria-label="Kurangi jumlah"
+                                            class="w-8 h-8 rounded-lg bg-white dark:bg-slate-700/90 hover:bg-rose-50 dark:hover:bg-rose-950/60 text-slate-700 dark:text-slate-200 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-200/80 dark:border-slate-600/80 flex items-center justify-center transition-colors active:scale-95 shrink-0">
+                                            <i data-lucide="minus" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                        <input type="number" id="item-qty" min="1" max="999" value="1" required
+                                            onblur="if(!this.value || parseInt(this.value,10) < 1) this.value = 1;"
+                                            class="w-full bg-transparent text-sm text-center font-bold text-slate-900 dark:text-white focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                                        <button type="button" onclick="adjustFormQty(1)" aria-label="Tambah jumlah"
+                                            class="w-8 h-8 rounded-lg bg-white dark:bg-slate-700/90 hover:bg-rose-50 dark:hover:bg-rose-950/60 text-slate-700 dark:text-slate-200 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-200/80 dark:border-slate-600/80 flex items-center justify-center transition-colors active:scale-95 shrink-0">
+                                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                    </div>
+
+                                    <!-- Segmented Unit Toggle: Pcs (Satuan) vs Pack -->
+                                    <div class="col-span-6 grid grid-cols-2 gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700">
+                                        <label class="cursor-pointer">
+                                            <input type="radio" name="item-unit" value="Pcs" checked class="peer sr-only">
+                                            <div class="h-8 rounded-lg text-[11px] font-semibold flex items-center justify-center text-slate-600 dark:text-slate-400 peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-rose-600 dark:peer-checked:text-rose-400 peer-checked:shadow-sm transition-all">
+                                                Satuan (Pcs)
+                                            </div>
+                                        </label>
+                                        <label class="cursor-pointer">
+                                            <input type="radio" name="item-unit" value="Pack" class="peer sr-only">
+                                            <div class="h-8 rounded-lg text-[11px] font-semibold flex items-center justify-center text-slate-600 dark:text-slate-400 peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-indigo-600 dark:peer-checked:text-indigo-400 peer-checked:shadow-sm transition-all">
+                                                Per Pack
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bag Location -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Lokasi Penyimpanan</label>
+                            <div class="grid grid-cols-2 gap-2.5">
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="bag-location" value="Kabin" checked class="peer sr-only" onchange="liveCheckCustoms(document.getElementById('item-name').value)">
+                                    <div class="px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 peer-checked:border-rose-500 peer-checked:bg-rose-50/70 dark:peer-checked:bg-rose-950/30 peer-checked:text-rose-600 dark:peer-checked:text-rose-400 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all">
+                                        <i data-lucide="backpack" class="w-3.5 h-3.5"></i>
+                                        <span>Tas Kabin</span>
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="bag-location" value="Bagasi Tercatat" class="peer sr-only" onchange="liveCheckCustoms(document.getElementById('item-name').value)">
+                                    <div class="px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 peer-checked:border-indigo-500 peer-checked:bg-indigo-50/70 dark:peer-checked:bg-indigo-950/30 peer-checked:text-indigo-600 dark:peer-checked:text-indigo-400 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all">
+                                        <i data-lucide="briefcase" class="w-3.5 h-3.5"></i>
+                                        <span>Bagasi Koper</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Catatan Tambahan</label>
+                            <textarea id="item-notes" rows="2" placeholder="Contoh: Kemasan botol 150ml, resep dokter, dll."
+                                oninput="liveCheckCustoms(document.getElementById('item-name').value)"
+                                class="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs focus:outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-500"></textarea>
+                        </div>
+
+                        <!-- Packed Checkbox -->
+                        <label class="flex items-center gap-2.5 cursor-pointer select-none pt-1">
+                            <input type="checkbox" id="item-packed" class="w-4 h-4 rounded text-rose-500 focus:ring-rose-500 border-slate-300 dark:border-slate-600">
+                            <span class="text-xs font-medium text-slate-700 dark:text-slate-300">Tandai sudah dikemas ke dalam tas</span>
+                        </label>
+
+                        <!-- Submit Button -->
+                        <div class="pt-1 flex gap-2">
+                            <button type="submit" id="save-btn" class="flex-1 py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-rose-500 dark:hover:bg-rose-600 text-white font-semibold text-xs shadow-sm transition-all flex items-center justify-center gap-2">
+                                <i data-lucide="check" class="w-4 h-4"></i>
+                                <span>Simpan ke Daftar</span>
+                            </button>
+                            <button type="button" onclick="openScannerModal()" class="py-3 px-3.5 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-rose-600 dark:text-rose-400 border border-rose-200/70 dark:border-slate-700 transition-colors" title="Scan Barcode">
+                                <i data-lucide="scan-barcode" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Quick Japan Customs Info Card -->
+                <div class="bg-indigo-50/70 dark:bg-indigo-950/30 rounded-3xl p-5 border border-indigo-100 dark:border-indigo-900/50">
+                    <div class="flex items-center gap-2 text-indigo-700 dark:text-indigo-300 font-bold text-xs mb-2">
+                        <i data-lucide="info" class="w-4 h-4"></i>
+                        <span>Aturan Ketat Bea Cukai Jepang</span>
+                    </div>
+                    <ul class="text-[11px] text-indigo-900/80 dark:text-indigo-200/80 space-y-1.5 leading-relaxed">
+                        <li>• <strong>Dilarang Keras:</strong> Produk daging (sapi, ayam, babi, abon, rendang, sosis) tanpa sertifikat karantina resmi.</li>
+                        <li>• <strong>Karantina Tumbuhan:</strong> Buah segar, sayuran segar, dan bibit tanaman dilarang masuk.</li>
+                        <li>• <strong>Kabin Pesawat:</strong> Cairan/gel/aerosol maksimal <strong>100ml</strong> per wadah dalam kantong plastik transparan.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Right Column: Filter, Search & Packing Checklist (8 Cols) -->
+            <div class="lg:col-span-8 space-y-4">
+                
+                <!-- Search & Category Filter Bar -->
+                <div class="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-bento dark:shadow-bento-dark space-y-4">
+                    <div class="flex flex-col sm:flex-row gap-3 justify-between">
+                        <!-- Search Input -->
+                        <div class="relative flex-1">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                            <input type="text" id="search-input" oninput="renderItems()" placeholder="Cari barang bawaan, merek, atau catatan..."
+                                class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-500">
+                        </div>
+                        
+                        <!-- Status Filter & Seed Sample -->
+                        <div class="flex items-center gap-2">
+                            <select id="status-filter" onchange="renderItems()" class="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-semibold focus:outline-none">
+                                <option value="all">Semua Status</option>
+                                <option value="unpacked">Belum Dikemas</option>
+                                <option value="packed">Sudah Dikemas</option>
+                                <option value="warning">Perlu Perhatian</option>
+                            </select>
+
+                            <button onclick="loadSampleTemplate()" class="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors whitespace-nowrap" title="Isi contoh daftar barang ke Jepang">
+                                + Template JP
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Category Pills -->
+                    <div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar" id="category-filters">
+                        <button onclick="setCategoryFilter('Semua')" data-cat="Semua" class="cat-pill active px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-900 text-white dark:bg-white dark:text-slate-900 transition-all whitespace-nowrap">
+                            Semua
+                        </button>
+                        <button onclick="setCategoryFilter('Makanan & Minuman')" data-cat="Makanan & Minuman" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap">
+                            🍱 Makanan & Minuman
+                        </button>
+                        <button onclick="setCategoryFilter('Dokumen & Paspor')" data-cat="Dokumen & Paspor" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap">
+                            🛂 Dokumen & Paspor
+                        </button>
+                        <button onclick="setCategoryFilter('Pakaian')" data-cat="Pakaian" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap">
+                            🧥 Pakaian
+                        </button>
+                        <button onclick="setCategoryFilter('Elektronik')" data-cat="Elektronik" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap">
+                            🔌 Elektronik
+                        </button>
+                        <button onclick="setCategoryFilter('Obat-obatan')" data-cat="Obat-obatan" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap">
+                            💊 Obat-obatan
+                        </button>
+                        <button onclick="setCategoryFilter('Lainnya')" data-cat="Lainnya" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap">
+                            🎒 Lainnya
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Checklist Items Container -->
+                <div id="items-list" class="space-y-3">
+                    <!-- Dynamic Items Rendered Here -->
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="hidden bg-white dark:bg-slate-900 rounded-3xl p-12 border border-dashed border-slate-300 dark:border-slate-700 text-center">
+                    <div class="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400 mb-4">
+                        <i data-lucide="package-open" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="font-bold text-base text-slate-900 dark:text-white">Daftar Barang Masih Kosong</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto mt-1.5 leading-relaxed">
+                        Tambahkan barang secara manual di panel samping, pindai barcode makanan/minuman, atau muat template barang wajib ke Jepang.
+                    </p>
+                    <div class="mt-5 flex flex-wrap items-center justify-center gap-2.5">
+                        <button onclick="openScannerModal()" class="px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm">
+                            <i data-lucide="scan-barcode" class="w-4 h-4"></i>
+                            <span>Scan Barcode Produk</span>
+                        </button>
+                        <button onclick="loadSampleTemplate()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold">
+                            Muat Contoh Daftar Jepang
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 1: BARCODE SCANNER & OPEN FOOD FACTS JAPAN CUSTOMS ANALYZER     -->
+    <!-- ===================================================================== -->
+    <div id="scanner-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950 text-rose-500 flex items-center justify-center">
+                        <i data-lucide="scan-barcode" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm text-slate-900 dark:text-white">Pemindai Barcode & Cek Bea Cukai JP</h3>
+                        <p class="text-[11px] text-slate-500">Database Open Food Facts + Analisis Karantina Jepang</p>
+                    </div>
+                </div>
+                <button onclick="closeScannerModal()" class="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="p-6 overflow-y-auto space-y-4">
+                <!-- Mode Tabs -->
+                <div class="grid grid-cols-2 gap-2 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800">
+                    <button id="tab-cam-btn" onclick="switchScannerMode('camera')" class="py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm transition-all flex items-center justify-center gap-1.5">
+                        <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+                        <span>Kamera Langsung</span>
+                    </button>
+                    <button id="tab-file-btn" onclick="switchScannerMode('file')" class="py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 transition-all flex items-center justify-center gap-1.5">
+                        <i data-lucide="image" class="w-3.5 h-3.5"></i>
+                        <span>Upload Foto Barcode</span>
+                    </button>
+                </div>
+
+                <!-- Camera Viewport -->
+                <div id="camera-scan-area" class="space-y-3">
+                    <div id="reader" class="w-full bg-slate-950 min-h-[240px] flex items-center justify-center relative">
+                        <p id="camera-placeholder-text" class="text-xs text-slate-400">Menginisialisasi kamera...</p>
+                    </div>
+                    <p class="text-[11px] text-center text-slate-500">Arahkan kamera ke barcode kemasan makanan/minuman (EAN-13 / UPC).</p>
+                </div>
+
+                <!-- File Upload Viewport -->
+                <div id="file-scan-area" class="hidden">
+                    <label class="flex flex-col items-center justify-center w-full h-44 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl cursor-pointer bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors p-4 text-center">
+                        <i data-lucide="upload-cloud" class="w-8 h-8 text-rose-500 mb-2"></i>
+                        <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">Pilih atau jatuhkan gambar barcode</span>
+                        <span class="text-[11px] text-slate-400 mt-1">Mendukung JPG, PNG, WEBP</span>
+                        <input type="file" id="barcode-file-input" accept="image/*" class="hidden" onchange="handleFileScan(event)">
+                    </label>
+                    <div id="file-reader-hidden" class="hidden"></div>
+                </div>
+
+                <!-- Manual Barcode Input Fallback -->
+                <div class="pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <label class="block text-[11px] font-semibold text-slate-500 mb-1.5">Atau ketik angka barcode secara manual:</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="manual-barcode-input" placeholder="Contoh: 089686170726 (Indomie) atau 4902102072618"
+                            class="flex-1 px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs focus:outline-none focus:border-rose-500">
+                        <button onclick="lookupBarcode(document.getElementById('manual-barcode-input').value)" class="px-4 py-2 rounded-xl bg-slate-900 dark:bg-rose-500 text-white text-xs font-semibold hover:opacity-90">
+                            Cek
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loading Spinner -->
+                <div id="scan-loading" class="hidden py-6 text-center space-y-2">
+                    <div class="w-8 h-8 border-4 border-rose-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                    <p class="text-xs font-medium text-slate-600 dark:text-slate-300">Mencari produk di Open Food Facts & memeriksa aturan Jepang...</p>
+                </div>
+
+                <!-- Scan Result Card -->
+                <div id="scan-result-card" class="hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 p-4 space-y-3">
+                    <div class="flex items-start gap-3.5">
+                        <img id="scan-prod-img" src="https://placehold.co/80x80/e2e8f0/475569?text=Produk" alt="Produk" class="w-16 h-16 rounded-xl object-cover bg-white border border-slate-200 dark:border-slate-700 shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <span id="scan-prod-code" class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"></span>
+                            <h4 id="scan-prod-name" class="font-bold text-sm text-slate-900 dark:text-white mt-1 truncate">Nama Produk</h4>
+                            <p id="scan-prod-brand" class="text-xs text-slate-500 truncate">Merek</p>
+                        </div>
+                    </div>
+
+                    <!-- Customs Evaluation Result -->
+                    <div id="scan-customs-box" class="rounded-xl p-3 text-xs border">
+                        <p id="scan-customs-title" class="font-bold flex items-center gap-1.5"></p>
+                        <p id="scan-customs-reason" class="mt-1 leading-relaxed"></p>
+                    </div>
+
+                    <!-- Quantity & Unit Selector for Scanned Item -->
+                    <div class="grid grid-cols-12 gap-2 items-center pt-1">
+                        <div class="col-span-5 flex items-center rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-1">
+                            <button type="button" onclick="adjustScanQty(-1)" class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 hover:text-rose-500 flex items-center justify-center transition-colors">
+                                <i data-lucide="minus" class="w-3 h-3"></i>
+                            </button>
+                            <input type="number" id="scan-item-qty" min="1" max="999" value="1" class="w-full bg-transparent text-xs text-center font-bold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                            <button type="button" onclick="adjustScanQty(1)" class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 hover:text-rose-500 flex items-center justify-center transition-colors">
+                                <i data-lucide="plus" class="w-3 h-3"></i>
+                            </button>
+                        </div>
+                        <div class="col-span-7 grid grid-cols-2 gap-1 p-1 rounded-xl bg-slate-200/70 dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="scan-item-unit" value="Pcs" checked class="peer sr-only">
+                                <div class="h-7 rounded-lg text-[11px] font-semibold flex items-center justify-center text-slate-600 dark:text-slate-400 peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-rose-600 dark:peer-checked:text-rose-400 peer-checked:shadow-sm transition-all">
+                                    Satuan (Pcs)
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="scan-item-unit" value="Pack" class="peer sr-only">
+                                <div class="h-7 rounded-lg text-[11px] font-semibold flex items-center justify-center text-slate-600 dark:text-slate-400 peer-checked:bg-white dark:peer-checked:bg-slate-700 peer-checked:text-indigo-600 dark:peer-checked:text-indigo-400 peer-checked:shadow-sm transition-all">
+                                    Per Pack
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 pt-1">
+                        <button onclick="addScannedProductToList()" class="flex-1 py-2.5 px-4 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            <span>Masukkan ke Daftar Bawaan</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 2: AUTHENTICATION (GOOGLE & EMAIL/PASSWORD)                     -->
+    <!-- ===================================================================== -->
+    <div id="auth-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <h3 class="font-bold text-base text-slate-900 dark:text-white">Akun & Sinkronisasi Cloud</h3>
+                <button onclick="closeModal('auth-modal')" class="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-5">
+                <!-- Logged In View -->
+                <div id="auth-logged-in-view" class="hidden space-y-4 text-center">
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-br from-rose-500 to-indigo-600 text-white font-bold text-xl flex items-center justify-center mx-auto shadow-lg">
+                        <span id="user-avatar-initial">U</span>
+                    </div>
+                    <div>
+                        <h4 id="user-display-name" class="font-bold text-base text-slate-900 dark:text-white">Pengguna</h4>
+                        <p id="user-display-email" class="text-xs text-slate-500">user@example.com</p>
+                        <span class="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            Tersinkronisasi dengan Cloud Firestore
+                        </span>
+                    </div>
+                    <button onclick="handleLogout()" class="w-full py-2.5 px-4 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 font-semibold text-xs transition-colors">
+                        Keluar dari Akun
+                    </button>
+                </div>
+
+                <!-- Logged Out / Login Form View -->
+                <div id="auth-logged-out-view" class="space-y-4">
+                    <div id="firebase-not-ready-banner" class="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-800 dark:text-amber-300">
+                        <p class="font-semibold">Firebase Belum Dikonfigurasi</p>
+                        <p class="mt-0.5 text-[11px]">Saat ini aplikasi berjalan dalam Mode Lokal. Klik <strong>Cloud Config</strong> untuk menempelkan konfigurasi Firebase Anda agar bisa login dan menyimpan ke cloud.</p>
+                    </div>
+
+                    <!-- Google Sign-In -->
+                    <button onclick="handleGoogleLogin()" class="w-full py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold text-xs flex items-center justify-center gap-2.5 transition-colors">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24">
+                            <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.8C6.2 7.2 8.9 5 12 5z"/>
+                            <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.7-.2-2.5H12v4.8h6.5c-.3 1.5-1.1 2.8-2.4 3.6l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/>
+                            <path fill="#FBBC05" d="M5.3 14.8c-.2-.8-.4-1.6-.4-2.5s.2-1.7.4-2.5L1.6 7C.6 9 0 11.2 0 13.5s.6 4.5 1.6 6.5l3.7-2.8z"/>
+                            <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.1-6.7-5l-3.7 2.8C3.5 21 7.4 24 12 24z"/>
+                        </svg>
+                        <span>Masuk dengan Google</span>
+                    </button>
+
+                    <div class="relative flex py-1 items-center">
+                        <div class="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
+                        <span class="flex-shrink mx-3 text-[11px] text-slate-400">atau Email & Sandi</span>
+                        <div class="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
+                    </div>
+
+                    <form onsubmit="handleEmailAuth(event)" class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-semibold mb-1">Email</label>
+                            <input type="email" id="auth-email" required placeholder="nama@email.com"
+                                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs focus:outline-none focus:border-rose-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold mb-1">Kata Sandi</label>
+                            <input type="password" id="auth-password" required minlength="6" placeholder="Minimal 6 karakter"
+                                class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs focus:outline-none focus:border-rose-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 pt-1">
+                            <button type="submit" onclick="setAuthAction('login')" class="py-2.5 px-4 rounded-xl bg-slate-900 dark:bg-rose-500 text-white font-semibold text-xs hover:opacity-90">
+                                Masuk
+                            </button>
+                            <button type="submit" onclick="setAuthAction('register')" class="py-2.5 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs hover:bg-slate-200 dark:hover:bg-slate-700">
+                                Daftar Baru
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL 3: FIREBASE CONFIGURATION SETUP                                 -->
+    <!-- ===================================================================== -->
+    <div id="firebase-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="database" class="w-4 h-4 text-indigo-500"></i>
+                    <h3 class="font-bold text-sm text-slate-900 dark:text-white">Pengaturan Firebase Cloud</h3>
+                </div>
+                <button onclick="closeModal('firebase-modal')" class="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Tempelkan objek JSON konfigurasi proyek Firebase Anda (dari <strong>Project Settings &gt; General &gt; Your apps</strong>) untuk mengaktifkan Login Google/Email dan sinkronisasi Firestore real-time pada koleksi <code class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-rose-500">users/{uid}/items</code>.
+                </p>
+
+                <div>
+                    <label class="block text-xs font-semibold mb-1.5">Konfigurasi Firebase (JSON atau JS Object)</label>
+                    <textarea id="firebase-config-input" rows="7" placeholder='{
+  "apiKey": "AIzaSy...",
+  "authDomain": "proyek-anda.firebaseapp.com",
+  "projectId": "proyek-anda",
+  "storageBucket": "proyek-anda.appspot.com",
+  "messagingSenderId": "123456789",
+  "appId": "1:123456789:web:abcdef"
+}' class="w-full p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-mono text-xs focus:outline-none focus:border-indigo-500"></textarea>
+                </div>
+
+                <div class="flex items-center justify-between gap-2 pt-2">
+                    <button onclick="clearFirebaseConfig()" class="px-3.5 py-2.5 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors">
+                        Kembalikan ke Default
+                    </button>
+                    <div class="flex gap-2">
+                        <button onclick="closeModal('firebase-modal')" class="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold">
+                            Batal
+                        </button>
+                        <button onclick="saveFirebaseConfig()" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm">
+                            Simpan & Hubungkan
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Memuat Konfigurasi Firebase Terpisah -->
+    <script src="./firebase-config.js"></script>
+
+    <!-- ===================================================================== -->
+    <!-- APPLICATION SCRIPT (FIREBASE MODULAR SDK + LOGIC + CUSTOMS ENGINE)    -->
+    <!-- ===================================================================== -->
+    <script type="module">
+        import { initializeApp, getApps, deleteApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { 
+            getAuth, 
+            GoogleAuthProvider, 
+            signInWithPopup, 
+            signInWithEmailAndPassword, 
+            createUserWithEmailAndPassword, 
+            signOut, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            doc, 
+            setDoc, 
+            updateDoc, 
+            deleteDoc, 
+            onSnapshot, 
+            query, 
+            orderBy 
+        } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+        // =========================================================================
+        // 1. GLOBAL STATE & STORAGE KEYS
+        // =========================================================================
+        const DEFAULT_FIREBASE_CONFIG = window.MINGGATJP_FIREBASE_CONFIG || null;
+        const LOCAL_STORAGE_ITEMS_KEY = 'minggatjp_items_v1';
+        const LOCAL_STORAGE_FB_CONFIG_KEY = 'minggatjp_fb_config_v1';
+        const LOCAL_STORAGE_THEME_KEY = 'minggatjp_theme_v1';
+
+        // Migrasi otomatis data lama dari TabiCheck JP jika tersedia
+        if (!localStorage.getItem(LOCAL_STORAGE_ITEMS_KEY) && localStorage.getItem('tabicheck_items_v1')) {
+            localStorage.setItem(LOCAL_STORAGE_ITEMS_KEY, localStorage.getItem('tabicheck_items_v1'));
+        }
+        if (!localStorage.getItem(LOCAL_STORAGE_FB_CONFIG_KEY) && localStorage.getItem('tabicheck_fb_config_v1')) {
+            localStorage.setItem(LOCAL_STORAGE_FB_CONFIG_KEY, localStorage.getItem('tabicheck_fb_config_v1'));
+        }
+        if (!localStorage.getItem(LOCAL_STORAGE_THEME_KEY) && localStorage.getItem('tabicheck_theme_v1')) {
+            localStorage.setItem(LOCAL_STORAGE_THEME_KEY, localStorage.getItem('tabicheck_theme_v1'));
+        }
+
+        let items = [];
+        let activeCategory = 'Semua';
+        let fbApp = null;
+        let fbAuth = null;
+        let fbDb = null;
+        let currentUser = null;
+        let unsubscribeSnapshot = null;
+        let authActionMode = 'login';
+        let html5QrCode = null;
+        let lastScannedProduct = null;
+
+        // =========================================================================
+        // 2. JAPAN CUSTOMS & AVIATION RULE ENGINE
+        // =========================================================================
+        function analyzeCustomsRule(name = '', category = '', location = '', notes = '') {
+            const text = `${name} ${category} ${notes}`.toLowerCase();
+
+            // 1. Dilarang Keras (Karantina Hewan - Daging & Produk Olahan Daging)
+            const meatKeywords = [
+                'daging', 'sapi', 'ayam', 'babi', 'kambing', 'bebek', 'rendang', 'abon',
+                'sosis', 'bakso', 'kornet', 'dendeng', 'ham', 'bacon', 'salami', 'beef',
+                'pork', 'chicken', 'meat', 'jerky', 'nugget', 'kaldu daging', 'sate'
+            ];
+            if (meatKeywords.some(k => text.includes(k))) {
+                return {
+                    level: 'danger',
+                    title: 'Dilarang Keras Masuk Jepang!',
+                    reason: 'Produk mengandung daging (sapi/ayam/babi/olahan seperti rendang, abon, sosis) dilarang masuk Jepang tanpa sertifikat inspeksi karantina resmi dan berisiko denda hingga ¥3 juta.'
+                };
+            }
+
+            // 2. Karantina Tumbuhan (Buah & Sayur Segar)
+            const plantKeywords = [
+                'buah segar', 'apel', 'jeruk', 'pisang', 'mangga', 'durian', 'sayur segar',
+                'tanaman', 'bibit', 'biji', 'fresh fruit', 'fresh vegetable', 'cabai segar', 'bawang segar'
+            ];
+            if (plantKeywords.some(k => text.includes(k))) {
+                return {
+                    level: 'danger',
+                    title: 'Terkena Karantina Tumbuhan Jepang!',
+                    reason: 'Buah segar, sayuran segar, dan bibit tanaman umumnya dilarang dibawa masuk ke Jepang.'
+                };
+            }
+
+            // 3. Baterai Lithium / Powerbank di Bagasi Tercatat
+            const batteryKeywords = ['powerbank', 'power bank', 'baterai lithium', 'lithium battery', 'vape', 'rokok elektrik'];
+            if (batteryKeywords.some(k => text.includes(k)) && location === 'Bagasi Tercatat') {
+                return {
+                    level: 'danger',
+                    title: 'Wajib Masuk Tas Kabin!',
+                    reason: 'Powerbank, baterai lithium cadangan, dan rokok elektrik DILARANG keras dimasukkan ke dalam bagasi koper tercatat. Pindahkan ke Tas Kabin.'
+                };
+            }
+
+            // 4. Batas Cairan Kabin (>100ml)
+            const liquidKeywords = ['air', 'minum', 'botol', 'saus', 'kecap', 'sambal', 'parfum', 'lotion', 'sabun', 'shampo', 'madu', 'sirup', 'liquid', 'drink', 'beverage', 'juice', 'tea', 'coffee', 'teh', 'kopi'];
+            const mlMatch = text.match(/(\d+)\s*ml/);
+            const literMatch = text.match(/(\d+(?:[.,]\d+)?)\s*l(?:iter)?\b/);
+            const hasLargeVolume = (mlMatch && parseInt(mlMatch[1], 10) > 100) || (literMatch && parseFloat(literMatch[1].replace(',', '.')) > 0.1);
+
+            if (location === 'Kabin' && (hasLargeVolume || (liquidKeywords.some(k => text.includes(k)) && (text.includes('botol') || text.includes('sambal') || text.includes('kecap') || text.includes('madu'))))) {
+                return {
+                    level: 'warning',
+                    title: 'Periksa Batas Cairan Kabin (Maks 100ml)',
+                    reason: 'Cairan, gel, atau sambal dalam wadah >100ml tidak boleh dibawa ke kabin pesawat. Simpan di Bagasi Koper jika melebihi 100ml.'
+                };
+            }
+
+            // 5. Obat-obatan Tertentu
+            const medKeywords = ['obat', 'inhaler', 'psikotropika', 'codeine', 'pseudoephedrine', 'vicks', 'resep'];
+            if (category === 'Obat-obatan' || medKeywords.some(k => text.includes(k))) {
+                return {
+                    level: 'warning',
+                    title: 'Perhatian Obat-obatan Jepang',
+                    reason: 'Simpan obat dalam kemasan asli beserta resep dokter. Beberapa obat flu mengandung pseudoephedrine atau codeine dibatasi ketat di Jepang.'
+                };
+            }
+
+            // 6. Makanan Kemasan Umum (Aman dengan catatan)
+            if (category === 'Makanan & Minuman') {
+                return {
+                    level: 'safe',
+                    title: 'Aman Dibawa (Kemasan Pabrik)',
+                    reason: 'Makanan/minuman kemasan pabrik tanpa unsur daging atau buah segar diperbolehkan masuk Jepang untuk konsumsi pribadi.'
+                };
+            }
+
+            return null;
+        }
+
+        // =========================================================================
+        // 3. FIREBASE INITIALIZATION, AUTH & FIRESTORE SYNC
+        // =========================================================================
+        function getActiveFirebaseConfig() {
+            const rawConfig = localStorage.getItem(LOCAL_STORAGE_FB_CONFIG_KEY);
+            if (rawConfig) {
+                try {
+                    const parsed = JSON.parse(rawConfig);
+                    if (parsed && parsed.apiKey && parsed.projectId) {
+                        return parsed;
+                    }
+                } catch (e) {
+                    console.warn("Konfigurasi kustom tidak valid, menggunakan konfigurasi default.");
+                }
+            }
+            return DEFAULT_FIREBASE_CONFIG;
+        }
+
+        function initFirebaseFromStorage() {
+            const config = getActiveFirebaseConfig();
+
+            try {
+                if (!config || !config.apiKey || !config.projectId) {
+                    throw new Error("Konfigurasi Firebase tidak lengkap");
+                }
+
+                if (getApps().length > 0) {
+                    getApps().forEach(app => deleteApp(app));
+                }
+
+                fbApp = initializeApp(config);
+                fbAuth = getAuth(fbApp);
+                fbDb = getFirestore(fbApp);
+
+                const configInput = document.getElementById('firebase-config-input');
+                if (configInput) configInput.value = JSON.stringify(config, null, 2);
+                const bannerEl = document.getElementById('firebase-not-ready-banner');
+                if (bannerEl) bannerEl.classList.add('hidden');
+
+                onAuthStateChanged(fbAuth, async (user) => {
+                    currentUser = user;
+                    updateAuthHeaderUI(user);
+
+                    if (user) {
+                        updateSyncUI(true, user);
+                        await migrateLocalItemsToCloudIfNeeded(user.uid);
+                        subscribeFirestoreItems(user.uid);
+                    } else {
+                        if (unsubscribeSnapshot) {
+                            unsubscribeSnapshot();
+                            unsubscribeSnapshot = null;
+                        }
+                        updateSyncUI(false);
+                        loadLocalItems();
+                    }
+                });
+
+            } catch (err) {
+                console.error("Firebase Init Error:", err);
+                showToast("Konfigurasi Firebase tidak valid. Kembali ke Mode Lokal.", "error");
+                updateSyncUI(false);
+                loadLocalItems();
+            }
+        }
+
+        async function migrateLocalItemsToCloudIfNeeded(uid) {
+            if (!fbDb) return;
+            try {
+                const rawLocal = localStorage.getItem(LOCAL_STORAGE_ITEMS_KEY);
+                if (!rawLocal) return;
+                const localList = JSON.parse(rawLocal);
+                if (!Array.isArray(localList) || localList.length === 0) return;
+
+                for (const item of localList) {
+                    if (item && item.id) {
+                        const docRef = doc(fbDb, 'users', uid, 'items', item.id);
+                        await setDoc(docRef, item, { merge: true });
+                    }
+                }
+                localStorage.removeItem(LOCAL_STORAGE_ITEMS_KEY);
+                showToast(`${localList.length} barang lokal disinkronkan ke akun Cloud Anda!`, "success");
+            } catch (err) {
+                console.warn("Migrasi lokal ke cloud dilewati:", err);
+            }
+        }
+
+        function subscribeFirestoreItems(uid) {
+            if (!fbDb) return;
+            if (unsubscribeSnapshot) unsubscribeSnapshot();
+
+            const itemsCol = collection(fbDb, 'users', uid, 'items');
+            const q = query(itemsCol, orderBy('createdAt', 'desc'));
+
+            unsubscribeSnapshot = onSnapshot(q, (snapshot) => {
+                items = snapshot.docs.map(docSnap => ({
+                    id: docSnap.id,
+                    ...docSnap.data()
+                }));
+                renderItems();
+                updateStats();
+            }, (error) => {
+                console.error("Firestore Snapshot Error:", error);
+                showToast("Gagal memuat data cloud: " + error.message, "error");
+            });
+        }
+
+        window.saveFirebaseConfig = function() {
+            const raw = document.getElementById('firebase-config-input').value.trim();
+            if (!raw) {
+                showToast("Masukkan konfigurasi Firebase terlebih dahulu.", "error");
+                return;
+            }
+            try {
+                // Dukung format JSON murni maupun potongan JS object
+                const normalized = raw
+                    .replace(/^[^{]*\{/, '{')
+                    .replace(/\}[^}]*$/, '}')
+                    .replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":')
+                    .replace(/'/g, '"');
+                const parsed = JSON.parse(normalized);
+                if (!parsed.apiKey || !parsed.projectId) {
+                    throw new Error("apiKey dan projectId wajib ada.");
+                }
+                localStorage.setItem(LOCAL_STORAGE_FB_CONFIG_KEY, JSON.stringify(parsed));
+                initFirebaseFromStorage();
+                closeModal('firebase-modal');
+                showToast(`Terhubung ke proyek Firebase: ${parsed.projectId}`, "success");
+            } catch (err) {
+                showToast("Format konfigurasi tidak valid: " + err.message, "error");
+            }
+        };
+
+        window.clearFirebaseConfig = function() {
+            localStorage.removeItem(LOCAL_STORAGE_FB_CONFIG_KEY);
+            if (unsubscribeSnapshot) {
+                unsubscribeSnapshot();
+                unsubscribeSnapshot = null;
+            }
+            initFirebaseFromStorage();
+            closeModal('firebase-modal');
+            showToast("Konfigurasi dikembalikan ke proyek default (minggat-jp).", "info");
+        };
+
+        // =========================================================================
+        // 4. AUTHENTICATION HANDLERS
+        // =========================================================================
+        window.setAuthAction = function(mode) {
+            authActionMode = mode;
+        };
+
+        window.handleGoogleLogin = async function() {
+            if (!fbAuth) {
+                showToast("Firebase belum siap.", "error");
+                return;
+            }
+            try {
+                const provider = new GoogleAuthProvider();
+                await signInWithPopup(fbAuth, provider);
+                closeModal('auth-modal');
+                showToast("Berhasil masuk dengan akun Google!", "success");
+            } catch (err) {
+                console.error("Google Login Error:", err);
+                if (err.code === 'auth/unauthorized-domain' || window.location.protocol === 'file:') {
+                    showToast("Login Google memerlukan server HTTP/HTTPS (Live Server / Hosting), bukan file:/// langsung.", "error");
+                } else {
+                    showToast("Gagal masuk dengan Google: " + err.message, "error");
+                }
+            }
+        };
+
+        window.handleEmailAuth = async function(e) {
+            e.preventDefault();
+            if (!fbAuth) {
+                showToast("Firebase belum siap.", "error");
+                return;
+            }
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+
+            try {
+                if (authActionMode === 'register') {
+                    await createUserWithEmailAndPassword(fbAuth, email, password);
+                    showToast("Akun baru berhasil dibuat & terhubung!", "success");
+                } else {
+                    await signInWithEmailAndPassword(fbAuth, email, password);
+                    showToast("Berhasil masuk ke akun Anda!", "success");
+                }
+                closeModal('auth-modal');
+            } catch (err) {
+                console.error("Email Auth Error:", err);
+                showToast("Autentikasi gagal: " + err.message, "error");
+            }
+        };
+
+        window.handleLogout = async function() {
+            if (!fbAuth) return;
+            try {
+                await signOut(fbAuth);
+                closeModal('auth-modal');
+                showToast("Anda telah keluar. Beralih ke Mode Lokal.", "info");
+            } catch (err) {
+                showToast("Gagal keluar: " + err.message, "error");
+            }
+        };
+
+        function updateAuthHeaderUI(user) {
+            const headerArea = document.getElementById('auth-header-area');
+            const loggedInView = document.getElementById('auth-logged-in-view');
+            const loggedOutView = document.getElementById('auth-logged-out-view');
+
+            if (user) {
+                const displayName = user.displayName || user.email.split('@')[0];
+                const initial = displayName.charAt(0).toUpperCase();
+
+                headerArea.innerHTML = `
+                    <button onclick="openModal('auth-modal')" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 transition-colors">
+                        <span class="w-5 h-5 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center">${initial}</span>
+                        <span class="max-w-[90px] truncate hidden sm:inline">${escapeHtml(displayName)}</span>
+                    </button>
+                `;
+
+                document.getElementById('user-avatar-initial').textContent = initial;
+                document.getElementById('user-display-name').textContent = displayName;
+                document.getElementById('user-display-email').textContent = user.email;
+                loggedInView.classList.remove('hidden');
+                loggedOutView.classList.add('hidden');
+            } else {
+                headerArea.innerHTML = `
+                    <button onclick="openModal('auth-modal')" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 transition-colors shadow-sm">
+                        <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
+                        <span>Masuk / Akun</span>
+                    </button>
+                `;
+                loggedInView.classList.add('hidden');
+                loggedOutView.classList.remove('hidden');
+            }
+            lucide.createIcons();
+        }
+
+        function updateSyncUI(isCloud, user = null) {
+            const badge = document.getElementById('sync-badge');
+            if (!badge) return;
+            if (isCloud && user) {
+                badge.className = "hidden sm:inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60";
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Cloud Sync Aktif`;
+            } else {
+                badge.className = "hidden sm:inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60";
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Mode Tamu (Lokal)`;
+            }
+        }
+
+        // =========================================================================
+        // 5. CRUD OPERATIONS (LOCAL & FIRESTORE)
+        // =========================================================================
+        function loadLocalItems() {
+            try {
+                const raw = localStorage.getItem(LOCAL_STORAGE_ITEMS_KEY);
+                items = raw ? JSON.parse(raw) : [];
+            } catch (e) {
+                items = [];
+            }
+            renderItems();
+            updateStats();
+        }
+
+        function persistLocalItems() {
+            localStorage.setItem(LOCAL_STORAGE_ITEMS_KEY, JSON.stringify(items));
+            renderItems();
+            updateStats();
+        }
+
+        window.handleSaveItem = async function(e) {
+            e.preventDefault();
+            const idInput = document.getElementById('item-id').value;
+            const name = document.getElementById('item-name').value.trim();
+            const category = document.getElementById('item-category').value;
+            const qty = Math.max(1, parseInt(document.getElementById('item-qty').value, 10) || 1);
+            const unitEl = document.querySelector('input[name="item-unit"]:checked');
+            const unit = unitEl ? unitEl.value : 'Pcs';
+            const locationEl = document.querySelector('input[name="bag-location"]:checked');
+            const location = locationEl ? locationEl.value : 'Kabin';
+            const notes = document.getElementById('item-notes').value.trim();
+            const packed = document.getElementById('item-packed').checked;
+            const image = document.getElementById('item-image').value || '';
+            const barcode = document.getElementById('item-barcode').value || '';
+
+            if (!name) return;
+
+            const customs = analyzeCustomsRule(name, category, location, notes);
+            const isEdit = Boolean(idInput);
+            const itemId = isEdit ? idInput : 'item_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+
+            const itemData = {
+                id: itemId,
+                name,
+                category,
+                qty,
+                unit,
+                location,
+                notes,
+                packed,
+                image,
+                barcode,
+                customsLevel: customs ? customs.level : 'normal',
+                customsTitle: customs ? customs.title : '',
+                customsReason: customs ? customs.reason : '',
+                createdAt: isEdit ? (items.find(i => i.id === itemId)?.createdAt || Date.now()) : Date.now(),
+                updatedAt: Date.now()
+            };
+
+            if (currentUser && fbDb) {
+                try {
+                    const docRef = doc(fbDb, 'users', currentUser.uid, 'items', itemId);
+                    await setDoc(docRef, itemData, { merge: true });
+                    showToast(isEdit ? "Barang diperbarui di Cloud!" : "Barang disimpan ke Cloud!", "success");
+                } catch (err) {
+                    showToast("Gagal menyimpan ke Cloud: " + err.message, "error");
+                }
+            } else {
+                if (isEdit) {
+                    const idx = items.findIndex(i => i.id === itemId);
+                    if (idx !== -1) items[idx] = itemData;
+                } else {
+                    items.unshift(itemData);
+                }
+                persistLocalItems();
+                showToast(isEdit ? "Barang diperbarui!" : "Barang ditambahkan ke daftar!", "success");
+            }
+
+            resetForm();
+        };
+
+        window.togglePacked = async function(id) {
+            const target = items.find(i => i.id === id);
+            if (!target) return;
+            const nextPacked = !target.packed;
+
+            if (currentUser && fbDb) {
+                try {
+                    await updateDoc(doc(fbDb, 'users', currentUser.uid, 'items', id), {
+                        packed: nextPacked,
+                        updatedAt: Date.now()
+                    });
+                } catch (err) {
+                    showToast("Gagal memperbarui status: " + err.message, "error");
+                }
+            } else {
+                target.packed = nextPacked;
+                persistLocalItems();
+            }
+        };
+
+        window.quickAdjustQty = async function(id, delta) {
+            const target = items.find(i => i.id === id);
+            if (!target) return;
+            const currentQty = parseInt(target.qty, 10) || 1;
+            const nextQty = Math.max(1, currentQty + delta);
+            if (nextQty === currentQty) return;
+
+            if (currentUser && fbDb) {
+                try {
+                    await updateDoc(doc(fbDb, 'users', currentUser.uid, 'items', id), {
+                        qty: nextQty,
+                        updatedAt: Date.now()
+                    });
+                } catch (err) {
+                    showToast("Gagal mengubah jumlah: " + err.message, "error");
+                }
+            } else {
+                target.qty = nextQty;
+                persistLocalItems();
+            }
+        };
+
+        window.editItem = function(id) {
+            const target = items.find(i => i.id === id);
+            if (!target) return;
+
+            document.getElementById('item-id').value = target.id;
+            document.getElementById('item-name').value = target.name;
+            document.getElementById('item-category').value = target.category;
+            document.getElementById('item-qty').value = target.qty || 1;
+            document.getElementById('item-notes').value = target.notes || '';
+            document.getElementById('item-packed').checked = Boolean(target.packed);
+            document.getElementById('item-image').value = target.image || '';
+            document.getElementById('item-barcode').value = target.barcode || '';
+
+            const unitRadio = document.querySelector(`input[name="item-unit"][value="${target.unit || 'Pcs'}"]`);
+            if (unitRadio) unitRadio.checked = true;
+
+            const locRadio = document.querySelector(`input[name="bag-location"][value="${target.location || 'Kabin'}"]`);
+            if (locRadio) locRadio.checked = true;
+
+            document.getElementById('form-title').textContent = 'Edit Barang Bawaan';
+            document.getElementById('save-btn').innerHTML = `<i data-lucide="save" class="w-4 h-4"></i><span>Simpan Perubahan</span>`;
+            document.getElementById('cancel-edit-btn').classList.remove('hidden');
+
+            liveCheckCustoms(target.name);
+            lucide.createIcons();
+            document.getElementById('item-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        };
+
+        window.deleteItem = async function(id) {
+            if (currentUser && fbDb) {
+                try {
+                    await deleteDoc(doc(fbDb, 'users', currentUser.uid, 'items', id));
+                    showToast("Barang dihapus dari Cloud.", "info");
+                } catch (err) {
+                    showToast("Gagal menghapus: " + err.message, "error");
+                }
+            } else {
+                items = items.filter(i => i.id !== id);
+                persistLocalItems();
+                showToast("Barang dihapus dari daftar.", "info");
+            }
+        };
+
+        window.resetForm = function() {
+            document.getElementById('item-form').reset();
+            document.getElementById('item-id').value = '';
+            document.getElementById('item-image').value = '';
+            document.getElementById('item-barcode').value = '';
+            document.getElementById('item-qty').value = 1;
+            document.getElementById('form-title').textContent = 'Tambah Barang Manual';
+            document.getElementById('save-btn').innerHTML = `<i data-lucide="check" class="w-4 h-4"></i><span>Simpan ke Daftar</span>`;
+            document.getElementById('cancel-edit-btn').classList.add('hidden');
+            document.getElementById('live-customs-alert').classList.add('hidden');
+            lucide.createIcons();
+        };
+
+        window.adjustFormQty = function(delta) {
+            const input = document.getElementById('item-qty');
+            const current = parseInt(input.value, 10) || 1;
+            input.value = Math.min(999, Math.max(1, current + delta));
+        };
+
+        window.adjustScanQty = function(delta) {
+            const input = document.getElementById('scan-item-qty');
+            const current = parseInt(input.value, 10) || 1;
+            input.value = Math.min(999, Math.max(1, current + delta));
+        };
+
+        window.liveCheckCustoms = function(nameVal) {
+            const alertBox = document.getElementById('live-customs-alert');
+            const titleEl = document.getElementById('live-customs-title');
+            const descEl = document.getElementById('live-customs-desc');
+            const iconEl = document.getElementById('live-customs-icon');
+
+            if (!nameVal || !nameVal.trim()) {
+                alertBox.classList.add('hidden');
+                return;
+            }
+
+            const category = document.getElementById('item-category').value;
+            const locEl = document.querySelector('input[name="bag-location"]:checked');
+            const location = locEl ? locEl.value : 'Kabin';
+            const notes = document.getElementById('item-notes').value;
+
+            const res = analyzeCustomsRule(nameVal, category, location, notes);
+            if (!res) {
+                alertBox.classList.add('hidden');
+                return;
+            }
+
+            alertBox.classList.remove('hidden');
+            titleEl.textContent = res.title;
+            descEl.textContent = res.reason;
+
+            if (res.level === 'danger') {
+                alertBox.className = "rounded-2xl p-3.5 text-xs border bg-rose-50 dark:bg-rose-950/50 border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200 transition-all";
+                iconEl.setAttribute('data-lucide', 'octagon-alert');
+            } else if (res.level === 'warning') {
+                alertBox.className = "rounded-2xl p-3.5 text-xs border bg-amber-50 dark:bg-amber-950/50 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 transition-all";
+                iconEl.setAttribute('data-lucide', 'alert-triangle');
+            } else {
+                alertBox.className = "rounded-2xl p-3.5 text-xs border bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 transition-all";
+                iconEl.setAttribute('data-lucide', 'shield-check');
+            }
+            lucide.createIcons();
+        };
+
+        // =========================================================================
+        // 6. RENDERING & FILTERING
+        // =========================================================================
+        window.setCategoryFilter = function(cat) {
+            activeCategory = cat;
+            document.querySelectorAll('.cat-pill').forEach(btn => {
+                if (btn.dataset.cat === cat) {
+                    btn.className = "cat-pill active px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-900 text-white dark:bg-white dark:text-slate-900 transition-all whitespace-nowrap";
+                } else {
+                    btn.className = "cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap";
+                }
+            });
+            renderItems();
+        };
+
+        window.renderItems = function() {
+            const listEl = document.getElementById('items-list');
+            const emptyEl = document.getElementById('empty-state');
+            const searchTerm = (document.getElementById('search-input').value || '').toLowerCase();
+            const statusFilter = document.getElementById('status-filter').value;
+
+            const filtered = items.filter(item => {
+                const matchCat = activeCategory === 'Semua' || item.category === activeCategory;
+                const matchSearch = !searchTerm ||
+                    (item.name || '').toLowerCase().includes(searchTerm) ||
+                    (item.notes || '').toLowerCase().includes(searchTerm) ||
+                    (item.barcode || '').includes(searchTerm);
+
+                let matchStatus = true;
+                if (statusFilter === 'packed') matchStatus = Boolean(item.packed);
+                else if (statusFilter === 'unpacked') matchStatus = !item.packed;
+                else if (statusFilter === 'warning') matchStatus = (item.customsLevel === 'danger' || item.customsLevel === 'warning');
+
+                return matchCat && matchSearch && matchStatus;
+            });
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = '';
+                emptyEl.classList.remove('hidden');
+                return;
+            }
+
+            emptyEl.classList.add('hidden');
+            listEl.innerHTML = filtered.map(item => {
+                const isDanger = item.customsLevel === 'danger';
+                const isWarning = item.customsLevel === 'warning';
+                const unitLabel = item.unit || 'Pcs';
+
+                let badgeHtml = '';
+                if (isDanger) {
+                    badgeHtml = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300 border border-rose-200 dark:border-rose-800"><i data-lucide="octagon-alert" class="w-3 h-3"></i> Dilarang / Cek Ketat</span>`;
+                } else if (isWarning) {
+                    badgeHtml = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border border-amber-200 dark:border-amber-800"><i data-lucide="alert-triangle" class="w-3 h-3"></i> Perlu Perhatian</span>`;
+                }
+
+                const imgHtml = item.image
+                    ? `<img src="${escapeHtml(item.image)}" onerror="this.style.display='none'" alt="" class="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0">`
+                    : '';
+
+                return `
+                <div class="bento-transition bg-white dark:bg-slate-900 rounded-2xl p-4 border ${item.packed ? 'border-emerald-200/80 dark:border-emerald-900/50 bg-emerald-50/20 dark:bg-emerald-950/10' : 'border-slate-200/80 dark:border-slate-800'} shadow-bento dark:shadow-bento-dark flex items-start gap-3.5">
+                    <!-- Checkbox -->
+                    <button onclick="togglePacked('${item.id}')" class="mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${item.packed ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 dark:border-slate-600 hover:border-rose-500'}">
+                        ${item.packed ? '<i data-lucide="check" class="w-3.5 h-3.5"></i>' : ''}
+                    </button>
+
+                    ${imgHtml}
+
+                    <!-- Main Info -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h4 class="font-bold text-sm ${item.packed ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white'}">${escapeHtml(item.name)}</h4>
+                            <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">${escapeHtml(item.category)}</span>
+                            <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold ${item.location === 'Kabin' ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-300' : 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-300'}">
+                                ${item.location === 'Kabin' ? '🎒 Kabin' : '🧳 Bagasi'}
+                            </span>
+                            ${badgeHtml}
+                        </div>
+
+                        ${item.notes ? `<p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">${escapeHtml(item.notes)}</p>` : ''}
+                        ${(isDanger || isWarning) && item.customsReason ? `<p class="text-[11px] mt-1.5 px-2.5 py-1.5 rounded-lg ${isDanger ? 'bg-rose-50/80 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300' : 'bg-amber-50/80 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300'}">${escapeHtml(item.customsReason)}</p>` : ''}
+                    </div>
+
+                    <!-- Right Quantity Stepper & Actions -->
+                    <div class="flex flex-col sm:flex-row items-end sm:items-center gap-2 shrink-0">
+                        <!-- Quick Stepper -->
+                        <div class="inline-flex items-center gap-1 px-1.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700">
+                            <button onclick="quickAdjustQty('${item.id}', -1)" class="w-6 h-6 rounded-lg bg-white dark:bg-slate-700 hover:text-rose-500 flex items-center justify-center text-xs font-bold shadow-xs" title="Kurangi">
+                                -
+                            </button>
+                            <span class="px-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 whitespace-nowrap">${item.qty || 1} ${escapeHtml(unitLabel)}</span>
+                            <button onclick="quickAdjustQty('${item.id}', 1)" class="w-6 h-6 rounded-lg bg-white dark:bg-slate-700 hover:text-rose-500 flex items-center justify-center text-xs font-bold shadow-xs" title="Tambah">
+                                +
+                            </button>
+                        </div>
+
+                        <!-- Edit & Delete -->
+                        <div class="flex items-center gap-1">
+                            <button onclick="editItem('${item.id}')" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-indigo-500 transition-colors" title="Edit">
+                                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="deleteItem('${item.id}')" class="p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/50 text-slate-400 hover:text-rose-500 transition-colors" title="Hapus">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        };
+
+        function updateStats() {
+            const total = items.length;
+            const packed = items.filter(i => i.packed).length;
+            const warning = items.filter(i => i.customsLevel === 'danger' || i.customsLevel === 'warning').length;
+            const percent = total === 0 ? 0 : Math.round((packed / total) * 100);
+
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-packed').textContent = packed;
+            document.getElementById('stat-warning').textContent = warning;
+            document.getElementById('progress-percent').textContent = `${percent}%`;
+            document.getElementById('progress-bar').style.width = `${percent}%`;
+
+            const subtitle = document.getElementById('readiness-subtitle');
+            if (total === 0) {
+                subtitle.textContent = "Mulai tambahkan atau pindai barang bawaan Anda.";
+            } else if (percent === 100) {
+                subtitle.textContent = "Semua barang sudah dikemas! Selamat terbang ke Jepang 🇯🇵";
+            } else {
+                subtitle.textContent = `${packed} dari ${total} barang sudah masuk ke dalam tas.`;
+            }
+        }
+
+        window.loadSampleTemplate = async function() {
+            const samples = [
+                { name: 'Paspor & Visit Japan Web QR', category: 'Dokumen & Paspor', qty: 1, unit: 'Pcs', location: 'Kabin', notes: 'Simpan di tas selempang mudah dijangkau', packed: true },
+                { name: 'Powerbank 10.000mAh', category: 'Elektronik', qty: 1, unit: 'Pcs', location: 'Kabin', notes: 'Wajib dibawa ke kabin pesawat', packed: false },
+                { name: 'Indomie Goreng (Kemasan)', category: 'Makanan & Minuman', qty: 1, unit: 'Pack', location: 'Bagasi Tercatat', notes: 'Isi 5 bungkus, bumbu tidak mengandung daging asli', packed: false },
+                { name: 'Jaket Heattech & Sweater', category: 'Pakaian', qty: 3, unit: 'Pcs', location: 'Bagasi Tercatat', notes: 'Untuk cuaca dingin', packed: false },
+                { name: 'Obat Pribadi & Tolak Angin', category: 'Obat-obatan', qty: 1, unit: 'Pack', location: 'Kabin', notes: 'Kemasan asli', packed: false }
+            ];
+
+            for (const s of samples) {
+                const customs = analyzeCustomsRule(s.name, s.category, s.location, s.notes);
+                const id = 'item_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+                const itemData = {
+                    id,
+                    ...s,
+                    image: '',
+                    barcode: '',
+                    customsLevel: customs ? customs.level : 'normal',
+                    customsTitle: customs ? customs.title : '',
+                    customsReason: customs ? customs.reason : '',
+                    createdAt: Date.now(),
+                    updatedAt: Date.now()
+                };
+
+                if (currentUser && fbDb) {
+                    await setDoc(doc(fbDb, 'users', currentUser.uid, 'items', id), itemData);
+                } else {
+                    items.unshift(itemData);
+                }
+            }
+
+            if (!currentUser || !fbDb) {
+                persistLocalItems();
+            }
+            showToast("Template barang bawaan ke Jepang ditambahkan!", "success");
+        };
+
+        // =========================================================================
+        // 7. BARCODE SCANNER & OPEN FOOD FACTS INTEGRATION
+        // =========================================================================
+        window.openScannerModal = function() {
+            openModal('scanner-modal');
+            document.getElementById('scan-result-card').classList.add('hidden');
+            switchScannerMode('camera');
+        };
+
+        window.closeScannerModal = async function() {
+            await stopCameraScanner();
+            closeModal('scanner-modal');
+        };
+
+        window.switchScannerMode = async function(mode) {
+            const camArea = document.getElementById('camera-scan-area');
+            const fileArea = document.getElementById('file-scan-area');
+            const tabCam = document.getElementById('tab-cam-btn');
+            const tabFile = document.getElementById('tab-file-btn');
+
+            if (mode === 'camera') {
+                camArea.classList.remove('hidden');
+                fileArea.classList.add('hidden');
+                tabCam.className = "py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm transition-all flex items-center justify-center gap-1.5";
+                tabFile.className = "py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 transition-all flex items-center justify-center gap-1.5";
+                startCameraScanner();
+            } else {
+                await stopCameraScanner();
+                camArea.classList.add('hidden');
+                fileArea.classList.remove('hidden');
+                tabFile.className = "py-2 rounded-xl text-xs font-semibold bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm transition-all flex items-center justify-center gap-1.5";
+                tabCam.className = "py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 transition-all flex items-center justify-center gap-1.5";
+            }
+        };
+
+        async function startCameraScanner() {
+            try {
+                await stopCameraScanner();
+                if (typeof Html5Qrcode === 'undefined') return;
+                html5QrCode = new Html5Qrcode("reader");
+                await html5QrCode.start(
+                    { facingMode: "environment" },
+                    { fps: 10, qrbox: { width: 250, height: 140 } },
+                    (decodedText) => {
+                        stopCameraScanner();
+                        lookupBarcode(decodedText);
+                    },
+                    () => {}
+                );
+            } catch (err) {
+                const ph = document.getElementById('camera-placeholder-text');
+                if (ph) ph.textContent = "Kamera tidak tersedia atau izin ditolak. Gunakan Upload Foto atau input manual.";
+            }
+        }
+
+        async function stopCameraScanner() {
+            if (html5QrCode) {
+                try {
+                    if (html5QrCode.isScanning) {
+                        await html5QrCode.stop();
+                    }
+                    html5QrCode.clear();
+                } catch (e) {}
+                html5QrCode = null;
+            }
+        }
+
+        window.handleFileScan = async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            try {
+                const fileScanner = new Html5Qrcode("file-reader-hidden");
+                const decodedText = await fileScanner.scanFile(file, true);
+                fileScanner.clear();
+                lookupBarcode(decodedText);
+            } catch (err) {
+                showToast("Barcode tidak terbaca dari gambar. Coba foto lebih jelas atau ketik nomor barcode.", "error");
+            }
+        };
+
+        window.lookupBarcode = async function(rawCode) {
+            const code = (rawCode || '').trim();
+            if (!code) {
+                showToast("Masukkan nomor barcode terlebih dahulu.", "error");
+                return;
+            }
+
+            const loadingEl = document.getElementById('scan-loading');
+            const resultCard = document.getElementById('scan-result-card');
+            loadingEl.classList.remove('hidden');
+            resultCard.classList.add('hidden');
+
+            try {
+                const resp = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json`);
+                const data = await resp.json();
+
+                let prodName = `Produk Barcode #${code}`;
+                let brand = 'Merek tidak tercatat';
+                let imgUrl = 'https://placehold.co/80x80/e2e8f0/475569?text=Produk';
+                let ingredientsText = '';
+
+                if (data && data.status === 1 && data.product) {
+                    const p = data.product;
+                    prodName = p.product_name_id || p.product_name || p.product_name_en || prodName;
+                    brand = p.brands || brand;
+                    imgUrl = p.image_front_small_url || p.image_url || imgUrl;
+                    ingredientsText = `${p.ingredients_text || ''} ${p.categories || ''} ${p.quantity || ''}`;
+                }
+
+                const customs = analyzeCustomsRule(prodName, 'Makanan & Minuman', 'Bagasi Tercatat', ingredientsText);
+
+                lastScannedProduct = {
+                    barcode: code,
+                    name: prodName,
+                    brand,
+                    image: imgUrl,
+                    notes: `${brand !== 'Merek tidak tercatat' ? 'Merek: ' + brand + '. ' : ''}Barcode: ${code}`,
+                    customs
+                };
+
+                document.getElementById('scan-prod-code').textContent = `Barcode: ${code}`;
+                document.getElementById('scan-prod-name').textContent = prodName;
+                document.getElementById('scan-prod-brand').textContent = brand;
+                document.getElementById('scan-prod-img').src = imgUrl;
+                document.getElementById('scan-item-qty').value = 1;
+
+                const box = document.getElementById('scan-customs-box');
+                const cTitle = document.getElementById('scan-customs-title');
+                const cReason = document.getElementById('scan-customs-reason');
+
+                if (customs && customs.level === 'danger') {
+                    box.className = "rounded-xl p-3 text-xs border bg-rose-50 dark:bg-rose-950/60 border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200";
+                    cTitle.textContent = customs.title;
+                    cReason.textContent = customs.reason;
+                } else if (customs && customs.level === 'warning') {
+                    box.className = "rounded-xl p-3 text-xs border bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200";
+                    cTitle.textContent = customs.title;
+                    cReason.textContent = customs.reason;
+                } else {
+                    box.className = "rounded-xl p-3 text-xs border bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200";
+                    cTitle.textContent = "Kemasan Pabrik Terdeteksi";
+                    cReason.textContent = "Pastikan tidak mengandung daging segar/olahan atau buah segar sebelum dibawa masuk ke Jepang.";
+                }
+
+                resultCard.classList.remove('hidden');
+            } catch (err) {
+                showToast("Gagal terhubung ke database Open Food Facts.", "error");
+            } finally {
+                loadingEl.classList.add('hidden');
+            }
+        };
+
+        window.addScannedProductToList = async function() {
+            if (!lastScannedProduct) return;
+            const qty = Math.max(1, parseInt(document.getElementById('scan-item-qty').value, 10) || 1);
+            const unitEl = document.querySelector('input[name="scan-item-unit"]:checked');
+            const unit = unitEl ? unitEl.value : 'Pcs';
+
+            const id = 'item_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+            const customs = lastScannedProduct.customs;
+
+            const itemData = {
+                id,
+                name: lastScannedProduct.name,
+                category: 'Makanan & Minuman',
+                qty,
+                unit,
+                location: 'Bagasi Tercatat',
+                notes: lastScannedProduct.notes,
+                packed: false,
+                image: lastScannedProduct.image,
+                barcode: lastScannedProduct.barcode,
+                customsLevel: customs ? customs.level : 'normal',
+                customsTitle: customs ? customs.title : '',
+                customsReason: customs ? customs.reason : '',
+                createdAt: Date.now(),
+                updatedAt: Date.now()
+            };
+
+            if (currentUser && fbDb) {
+                try {
+                    await setDoc(doc(fbDb, 'users', currentUser.uid, 'items', id), itemData);
+                    showToast("Produk hasil scan disimpan ke Cloud!", "success");
+                } catch (err) {
+                    showToast("Gagal menyimpan: " + err.message, "error");
+                }
+            } else {
+                items.unshift(itemData);
+                persistLocalItems();
+                showToast("Produk hasil scan ditambahkan ke daftar!", "success");
+            }
+
+            closeScannerModal();
+        };
+
+        // =========================================================================
+        // 8. UI HELPERS (MODALS, THEME, TOASTS)
+        // =========================================================================
+        window.openModal = function(modalId) {
+            const el = document.getElementById(modalId);
+            if (!el) return;
+            el.classList.remove('hidden');
+            el.classList.add('flex');
+            lucide.createIcons();
+        };
+
+        window.closeModal = function(modalId) {
+            const el = document.getElementById(modalId);
+            if (!el) return;
+            el.classList.add('hidden');
+            el.classList.remove('flex');
+        };
+
+        window.toggleTheme = function() {
+            const html = document.documentElement;
+            const isDark = html.classList.toggle('dark');
+            html.classList.toggle('light', !isDark);
+            localStorage.setItem(LOCAL_STORAGE_THEME_KEY, isDark ? 'dark' : 'light');
+        };
+
+        function initTheme() {
+            const saved = localStorage.getItem(LOCAL_STORAGE_THEME_KEY);
+            if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                document.documentElement.classList.remove('light');
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const colors = {
+                success: 'bg-emerald-600 text-white',
+                error: 'bg-rose-600 text-white',
+                info: 'bg-slate-900 dark:bg-slate-800 text-white border border-slate-700'
+            };
+
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto px-4 py-3 rounded-2xl shadow-lg text-xs font-semibold flex items-center justify-between gap-3 transition-all duration-300 ${colors[type] || colors.info}`;
+            toast.innerHTML = `<span>${escapeHtml(message)}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(8px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // =========================================================================
+        // 9. BOOTSTRAP APPLICATION
+        // =========================================================================
+        initTheme();
+        lucide.createIcons();
+        initFirebaseFromStorage();
+    </script>
+</body>
+</html>
