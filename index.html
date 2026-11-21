@@ -168,7 +168,7 @@
                 <div class="flex items-start justify-between gap-4">
                     <div>
                         <span class="text-xs font-semibold uppercase tracking-wider text-rose-500">Kesiapan Keberangkatan</span>
-                        <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white mt-1">Persiapan</h2>
+                        <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white mt-1">Persiapan ke Jepang</h2>
                         <p id="readiness-subtitle" class="text-xs text-slate-500 dark:text-slate-400 mt-1">Mulai tambahkan atau pindai barang bawaan Anda.</p>
                     </div>
                     <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-100 dark:border-rose-900/50 flex items-center justify-center text-rose-500 shrink-0">
@@ -304,6 +304,7 @@
                                 <select id="item-category" onchange="liveCheckCustoms(document.getElementById('item-name').value)"
                                     class="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-500">
                                     <option value="Makanan & Minuman">🍱 Makanan & Minuman</option>
+                                    <option value="Kosmetik & Perawatan">🧴 Kosmetik & Perawatan</option>
                                     <option value="Dokumen & Paspor">🛂 Dokumen & Paspor</option>
                                     <option value="Pakaian">🧥 Pakaian</option>
                                     <option value="Elektronik">🔌 Elektronik</option>
@@ -464,6 +465,9 @@
                         <button onclick="setCategoryFilter('Makanan & Minuman')" data-cat="Makanan & Minuman" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap">
                             🍱 Makanan & Minuman
                         </button>
+                        <button onclick="setCategoryFilter('Kosmetik & Perawatan')" data-cat="Kosmetik & Perawatan" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap">
+                            🧴 Kosmetik & Perawatan
+                        </button>
                         <button onclick="setCategoryFilter('Dokumen & Paspor')" data-cat="Dokumen & Paspor" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap">
                             🛂 Dokumen & Paspor
                         </button>
@@ -592,7 +596,7 @@
                                 <span id="scan-prod-code" class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"></span>
                                 <span id="scan-not-found-badge" class="hidden text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300">Belum Terdaftar</span>
                             </div>
-                            <input type="text" id="scan-prod-name-input" oninput="updateScannedProductName(this.value)" placeholder="Ketik nama produk (misal: Vaseline 200ml / Rokok)..."
+                            <input type="text" id="scan-prod-name-input" oninput="handleScanNameChange(this.value)" placeholder="Ketik nama produk (misal: Vaseline 200ml / Rokok)..."
                                 class="w-full px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 font-bold text-xs text-slate-900 dark:text-white focus:outline-none focus:border-rose-500">
                             <p id="scan-prod-brand" class="text-[11px] text-slate-500 break-words">Merek</p>
                         </div>
@@ -602,14 +606,15 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
                             <label class="block text-[10px] font-semibold text-slate-500 mb-1">Kategori</label>
-                            <select id="scan-item-category" onchange="updateScannedProductName(document.getElementById('scan-prod-name-input').value)"
+                            <select id="scan-item-category" onchange="handleScanCategoryManualChange()"
                                 class="w-full px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[11px] font-semibold focus:outline-none focus:border-rose-500">
                                 <option value="Makanan & Minuman">🍱 Makanan & Minuman</option>
-                                <option value="Lainnya">🎒 Kosmetik / Perawatan / Lainnya</option>
+                                <option value="Kosmetik & Perawatan">🧴 Kosmetik & Perawatan</option>
                                 <option value="Obat-obatan">💊 Obat-obatan</option>
                                 <option value="Elektronik">🔌 Elektronik</option>
                                 <option value="Pakaian">🧥 Pakaian</option>
                                 <option value="Dokumen & Paspor">🛂 Dokumen & Paspor</option>
+                                <option value="Lainnya">🎒 Lainnya</option>
                             </select>
                         </div>
                         <div>
@@ -799,17 +804,46 @@
         let authActionMode = 'login';
         let html5QrCode = null;
         let lastScannedProduct = null;
+        let scanCategoryManuallyEdited = false;
 
         // Katalog produk umum & populer (termasuk varian Vaseline & Rokok/Tembakau) sebagai fallback cepat
         const BUILTIN_PRODUCT_CATALOG = {
-            '8711600926625': { name: 'Vaseline Intensive Care Cocoa Radiant Lotion', brand: 'Vaseline', category: 'Lainnya', location: 'Bagasi Tercatat', notes: 'Lotion/pelembap kulit; cek ukuran >100ml jika masuk kabin.' },
-            '8999999000112': { name: 'Vaseline Petroleum Jelly Original', brand: 'Vaseline', category: 'Lainnya', location: 'Kabin', notes: 'Petroleum jelly/salep; pastikan wadah <=100g untuk kabin.' },
+            '8711600926625': { name: 'Vaseline Intensive Care Cocoa Radiant Lotion', brand: 'Vaseline', category: 'Kosmetik & Perawatan', location: 'Bagasi Tercatat', notes: 'Lotion/pelembap kulit; cek ukuran >100ml jika masuk kabin.' },
+            '8999999000112': { name: 'Vaseline Petroleum Jelly Original', brand: 'Vaseline', category: 'Kosmetik & Perawatan', location: 'Kabin', notes: 'Petroleum jelly/salep; pastikan wadah <=100g untuk kabin.' },
             '8999999000228': { name: 'Rokok Kretek / Filter (1 Bungkus)', brand: 'Tembakau / Rokok', category: 'Lainnya', location: 'Bagasi Tercatat', notes: 'Batas bebas cukai Jepang maks 200 batang (10 bungkus) untuk usia 20+.' }
         };
 
         // =========================================================================
-        // 2. JAPAN CUSTOMS & AVIATION RULE ENGINE
+        // 2. JAPAN CUSTOMS & AVIATION RULE ENGINE + CATEGORY AUTO-DETECT
         // =========================================================================
+        function detectCategoryFromScan(text = '', fallback = 'Lainnya') {
+            const t = String(text || '').toLowerCase();
+            if (!t.trim()) return fallback;
+
+            const medKeys = ['obat', 'inhaler', 'psikotropika', 'codeine', 'pseudoephedrine', 'vicks', 'fresh care', 'tolak angin', 'paracetamol', 'analgesik', 'antiseptik', 'telon'];
+            if (medKeys.some(k => t.includes(k))) return 'Obat-obatan';
+
+            const elecKeys = ['powerbank', 'power bank', 'baterai', 'battery', 'lithium', 'charger', 'kabel', 'headset', 'earphone', 'vape', 'rokok elektrik'];
+            if (elecKeys.some(k => t.includes(k))) return 'Elektronik';
+
+            const cosmeticKeys = [
+                'vaseline', 'lotion', 'sabun', 'shampo', 'shampoo', 'gel', 'krim', 'cream',
+                'serum', 'toner', 'sunscreen', 'moisturizer', 'deodorant', 'roll on', 'parfum',
+                'pasta gigi', 'sikat gigi', 'skincare', 'cosmetic', 'beauty', 'lip balm', 'body wash', 'face wash'
+            ];
+            if (cosmeticKeys.some(k => t.includes(k))) return 'Kosmetik & Perawatan';
+
+            const foodKeys = [
+                'indomie', 'mie', 'noodle', 'kopi', 'coffee', 'teh', 'tea', 'susu', 'milk',
+                'biskuit', 'biscuit', 'snack', 'keripik', 'chips', 'cokelat', 'chocolate',
+                'permen', 'candy', 'air mineral', 'minuman', 'drink', 'beverage', 'juice',
+                'saus', 'kecap', 'sambal', 'bumbu', 'food', 'makanan'
+            ];
+            if (foodKeys.some(k => t.includes(k))) return 'Makanan & Minuman';
+
+            return fallback;
+        }
+
         function analyzeCustomsRule(name = '', category = '', location = '', notes = '') {
             const rawText = `${name} ${category} ${notes}`.toLowerCase();
             // Abaikan kata daging jika hanya perisa sintetik / buatan
@@ -1594,7 +1628,7 @@
                 { name: 'Paspor & Visit Japan Web QR', category: 'Dokumen & Paspor', qty: 1, unit: 'Pcs', location: 'Kabin', notes: 'Simpan di tas selempang mudah dijangkau', packed: true },
                 { name: 'Powerbank 10.000mAh', category: 'Elektronik', qty: 1, unit: 'Pcs', location: 'Kabin', notes: 'Wajib dibawa ke kabin pesawat', packed: false },
                 { name: 'Indomie Goreng (Kemasan)', category: 'Makanan & Minuman', qty: 1, unit: 'Pack', location: 'Bagasi Tercatat', notes: 'Isi 5 bungkus, bumbu tidak mengandung daging asli', packed: false },
-                { name: 'Vaseline Lotion 200ml', category: 'Lainnya', qty: 1, unit: 'Pcs', location: 'Bagasi Tercatat', notes: 'Melebihi batas 100ml kabin, simpan di koper', packed: false },
+                { name: 'Vaseline Lotion 200ml', category: 'Kosmetik & Perawatan', qty: 1, unit: 'Pcs', location: 'Bagasi Tercatat', notes: 'Melebihi batas 100ml kabin, simpan di koper', packed: false },
                 { name: 'Rokok Kretek (1 Slop / 10 Bungkus)', category: 'Lainnya', qty: 1, unit: 'Pack', location: 'Bagasi Tercatat', notes: 'Maksimal 200 batang bebas cukai untuk usia 20+', packed: false },
                 { name: 'Jaket Heattech & Sweater', category: 'Pakaian', qty: 3, unit: 'Pcs', location: 'Bagasi Tercatat', notes: 'Untuk cuaca dingin', packed: false },
                 { name: 'Obat Pribadi & Tolak Angin', category: 'Obat-obatan', qty: 1, unit: 'Pack', location: 'Kabin', notes: 'Kemasan asli', packed: false }
@@ -1730,6 +1764,7 @@
             const notFoundBadge = document.getElementById('scan-not-found-badge');
             loadingEl.classList.remove('hidden');
             resultCard.classList.add('hidden');
+            scanCategoryManuallyEdited = false;
 
             try {
                 let isFound = false;
@@ -1737,18 +1772,21 @@
                 let brand = 'Merek tidak tercatat (Ketik nama produk seperti Vaseline / Rokok di atas)';
                 let imgUrl = 'https://placehold.co/80x80/e2e8f0/475569?text=Produk';
                 let ingredientsText = '';
-                let defaultCategory = 'Makanan & Minuman';
+                let defaultCategory = 'Lainnya';
                 let defaultLocation = 'Bagasi Tercatat';
                 let extraNotes = '';
 
                 // 1. Cek Open Food Facts terlebih dahulu
                 let productData = await fetchFromFactApi('https://world.openfoodfacts.org', code);
+                if (productData) {
+                    defaultCategory = 'Makanan & Minuman';
+                }
 
                 // 2. Jika tidak ketemu di makanan, cek Open Beauty Facts (untuk Vaseline, skincare, kosmetik)
                 if (!productData) {
                     productData = await fetchFromFactApi('https://world.openbeautyfacts.org', code);
                     if (productData) {
-                        defaultCategory = 'Lainnya';
+                        defaultCategory = 'Kosmetik & Perawatan';
                     }
                 }
 
@@ -1761,6 +1799,7 @@
                     brand = productData.brands || brand;
                     imgUrl = productData.image_front_small_url || productData.image_url || imgUrl;
                     ingredientsText = `${productData.ingredients_text || ''} ${productData.categories || ''} ${productData.quantity || ''}`;
+                    defaultCategory = detectCategoryFromScan(`${prodName} ${brand} ${ingredientsText}`, defaultCategory);
                 } else if (BUILTIN_PRODUCT_CATALOG[code]) {
                     const preset = BUILTIN_PRODUCT_CATALOG[code];
                     isFound = true;
@@ -1809,6 +1848,24 @@
             } finally {
                 loadingEl.classList.add('hidden');
             }
+        };
+
+        window.handleScanCategoryManualChange = function() {
+            scanCategoryManuallyEdited = true;
+            const currentName = document.getElementById('scan-prod-name-input').value;
+            updateScannedProductName(currentName);
+        };
+
+        window.handleScanNameChange = function(typedName) {
+            if (!lastScannedProduct) return;
+            if (!scanCategoryManuallyEdited && typedName && typedName.trim()) {
+                const detected = detectCategoryFromScan(
+                    `${typedName} ${lastScannedProduct.brand || ''} ${lastScannedProduct.ingredientsText || ''}`,
+                    lastScannedProduct.category || 'Lainnya'
+                );
+                document.getElementById('scan-item-category').value = detected;
+            }
+            updateScannedProductName(typedName);
         };
 
         window.updateScannedProductName = function(typedName) {
