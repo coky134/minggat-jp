@@ -77,6 +77,25 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+        /* Scrollbar horizontal khusus bar kategori */
+        .category-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(148, 163, 184, 0.65) rgba(148, 163, 184, 0.14);
+        }
+        .category-scroll::-webkit-scrollbar {
+            height: 6px;
+        }
+        .category-scroll::-webkit-scrollbar-track {
+            background: rgba(148, 163, 184, 0.14);
+            border-radius: 9999px;
+        }
+        .category-scroll::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.65);
+            border-radius: 9999px;
+        }
+        .category-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(244, 63, 94, 0.8);
+        }
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -457,31 +476,43 @@
                         </div>
                     </div>
 
-                    <!-- Category Pills -->
-                    <div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar" id="category-filters">
-                        <button onclick="setCategoryFilter('Semua')" data-cat="Semua" class="cat-pill active px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-900 text-white dark:bg-white dark:text-slate-900 transition-all whitespace-nowrap">
-                            Semua
+                    <!-- Category Pills with Visible Scrollbar & Scroll Buttons -->
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" onclick="scrollCategories(-220)" aria-label="Geser kategori ke kiri"
+                            class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0 transition-colors">
+                            <i data-lucide="chevron-left" class="w-4 h-4"></i>
                         </button>
-                        <button onclick="setCategoryFilter('Makanan & Minuman')" data-cat="Makanan & Minuman" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap">
-                            🍱 Makanan & Minuman
-                        </button>
-                        <button onclick="setCategoryFilter('Kosmetik & Perawatan')" data-cat="Kosmetik & Perawatan" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap">
-                            🧴 Kosmetik & Perawatan
-                        </button>
-                        <button onclick="setCategoryFilter('Dokumen & Paspor')" data-cat="Dokumen & Paspor" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap">
-                            🛂 Dokumen & Paspor
-                        </button>
-                        <button onclick="setCategoryFilter('Pakaian')" data-cat="Pakaian" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap">
-                            🧥 Pakaian
-                        </button>
-                        <button onclick="setCategoryFilter('Elektronik')" data-cat="Elektronik" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap">
-                            🔌 Elektronik
-                        </button>
-                        <button onclick="setCategoryFilter('Obat-obatan')" data-cat="Obat-obatan" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap">
-                            💊 Obat-obatan
-                        </button>
-                        <button onclick="setCategoryFilter('Lainnya')" data-cat="Lainnya" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap">
-                            🎒 Lainnya
+
+                        <div class="flex items-center gap-2 overflow-x-auto pb-2 pt-0.5 category-scroll flex-1 min-w-0" id="category-filters">
+                            <button onclick="setCategoryFilter('Semua')" data-cat="Semua" class="cat-pill active px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-900 text-white dark:bg-white dark:text-slate-900 transition-all whitespace-nowrap shrink-0">
+                                Semua
+                            </button>
+                            <button onclick="setCategoryFilter('Makanan & Minuman')" data-cat="Makanan & Minuman" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap shrink-0">
+                                🍱 Makanan & Minuman
+                            </button>
+                            <button onclick="setCategoryFilter('Kosmetik & Perawatan')" data-cat="Kosmetik & Perawatan" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap shrink-0">
+                                🧴 Kosmetik & Perawatan
+                            </button>
+                            <button onclick="setCategoryFilter('Dokumen & Paspor')" data-cat="Dokumen & Paspor" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap shrink-0">
+                                🛂 Dokumen & Paspor
+                            </button>
+                            <button onclick="setCategoryFilter('Pakaian')" data-cat="Pakaian" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap shrink-0">
+                                🧥 Pakaian
+                            </button>
+                            <button onclick="setCategoryFilter('Elektronik')" data-cat="Elektronik" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap shrink-0">
+                                🔌 Elektronik
+                            </button>
+                            <button onclick="setCategoryFilter('Obat-obatan')" data-cat="Obat-obatan" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap shrink-0">
+                                💊 Obat-obatan
+                            </button>
+                            <button onclick="setCategoryFilter('Lainnya')" data-cat="Lainnya" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap shrink-0">
+                                🎒 Lainnya
+                            </button>
+                        </div>
+
+                        <button type="button" onclick="scrollCategories(220)" aria-label="Geser kategori ke kanan"
+                            class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0 transition-colors">
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
                         </button>
                     </div>
                 </div>
@@ -1358,13 +1389,19 @@
         // =========================================================================
         // 6. RENDERING, FILTERING & EXPORT (EXCEL / PDF)
         // =========================================================================
+        window.scrollCategories = function(offset) {
+            const container = document.getElementById('category-filters');
+            if (!container) return;
+            container.scrollBy({ left: offset, behavior: 'smooth' });
+        };
+
         window.setCategoryFilter = function(cat) {
             activeCategory = cat;
             document.querySelectorAll('.cat-pill').forEach(btn => {
                 if (btn.dataset.cat === cat) {
-                    btn.className = "cat-pill active px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-900 text-white dark:bg-white dark:text-slate-900 transition-all whitespace-nowrap";
+                    btn.className = "cat-pill active px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-900 text-white dark:bg-white dark:text-slate-900 transition-all whitespace-nowrap shrink-0";
                 } else {
-                    btn.className = "cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap";
+                    btn.className = "cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap shrink-0";
                 }
             });
             renderItems();
