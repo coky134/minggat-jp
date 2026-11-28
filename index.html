@@ -286,46 +286,57 @@
                             </div>
                         </div>
 
-                        <!-- Photo Upload / Edit Section -->
+                        <!-- Photo Upload / Edit Section (Kamera Langsung & Galeri) -->
                         <div>
                             <div class="flex items-center justify-between mb-1.5">
                                 <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Foto Barang (Opsional)</label>
-                                <span class="text-[10px] text-slate-400">Otomatis dikompres</span>
+                                <span class="text-[10px] text-slate-400">Kamera / Galeri</span>
                             </div>
 
-                            <!-- Input File Tersembunyi -->
-                            <input type="file" id="item-photo-file" accept="image/*" class="hidden" onchange="handleItemPhotoUpload(event)">
+                            <!-- Input File Tersembunyi: Kamera Langsung & Galeri -->
+                            <input type="file" id="item-photo-camera" accept="image/*" capture="environment" class="hidden" onchange="handleItemPhotoUpload(event)">
+                            <input type="file" id="item-photo-gallery" accept="image/*" class="hidden" onchange="handleItemPhotoUpload(event)">
 
                             <!-- State 1: Belum ada foto -->
-                            <div id="photo-upload-placeholder" onclick="document.getElementById('item-photo-file').click()" 
-                                class="cursor-pointer rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-rose-400 p-3 flex items-center gap-3 transition-all">
-                                <div class="w-10 h-10 rounded-xl bg-white dark:bg-slate-700/80 border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-300 flex items-center justify-center shrink-0">
-                                    <i data-lucide="image-plus" class="w-4 h-4"></i>
-                                </div>
-                                <div class="min-w-0">
-                                    <p class="text-xs font-semibold text-slate-700 dark:text-slate-200">Pilih atau Ambil Foto Barang</p>
-                                    <p class="text-[11px] text-slate-400 truncate">JPG, PNG, WEBP untuk identifikasi isi tas</p>
-                                </div>
+                            <div id="photo-upload-placeholder" class="grid grid-cols-2 gap-2">
+                                <button type="button" onclick="openCameraPhotoInput()" 
+                                    class="rounded-xl border border-dashed border-rose-300 dark:border-rose-800/80 bg-rose-50/60 dark:bg-rose-950/30 hover:bg-rose-100/70 dark:hover:bg-rose-950/50 text-rose-600 dark:text-rose-300 p-2.5 flex flex-col items-center justify-center gap-1 text-center transition-all active:scale-[0.98]">
+                                    <i data-lucide="camera" class="w-4 h-4"></i>
+                                    <span class="text-[11px] font-semibold">Foto Langsung</span>
+                                </button>
+                                <button type="button" onclick="document.getElementById('item-photo-gallery').click()" 
+                                    class="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 p-2.5 flex flex-col items-center justify-center gap-1 text-center transition-all active:scale-[0.98]">
+                                    <i data-lucide="image" class="w-4 h-4"></i>
+                                    <span class="text-[11px] font-semibold">Pilih Galeri</span>
+                                </button>
                             </div>
 
-                            <!-- State 2: Sudah ada foto (Preview + Tombol Ganti & Hapus) -->
-                            <div id="photo-preview-box" class="hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 p-2.5 flex items-center justify-between gap-3">
-                                <div class="flex items-center gap-3 min-w-0">
-                                    <img id="item-photo-preview" src="" alt="Preview Barang" class="w-12 h-12 rounded-lg object-cover bg-white border border-slate-200 dark:border-slate-600 shrink-0">
-                                    <div class="min-w-0">
-                                        <p class="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">Foto terpasang</p>
-                                        <p class="text-[10px] text-slate-400">Klik ganti untuk ubah foto</p>
+                            <!-- State 2: Sudah ada foto (Preview + Tombol Foto Ulang, Galeri & Hapus) -->
+                            <div id="photo-preview-box" class="hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 p-2.5 space-y-2.5">
+                                <div class="flex items-center justify-between gap-2.5">
+                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        <img id="item-photo-preview" src="" alt="Preview Barang" class="w-12 h-12 rounded-lg object-cover bg-white border border-slate-200 dark:border-slate-600 shrink-0">
+                                        <div class="min-w-0">
+                                            <p class="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">Foto terpasang</p>
+                                            <p class="text-[10px] text-slate-400">Ganti via kamera / galeri</p>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="flex items-center gap-1.5 shrink-0">
-                                    <button type="button" onclick="document.getElementById('item-photo-file').click()" 
-                                        class="px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 border border-slate-200 dark:border-slate-600 text-[11px] font-semibold inline-flex items-center gap-1 transition-colors" title="Ganti Foto">
-                                        <i data-lucide="refresh-cw" class="w-3 h-3"></i>
-                                        <span>Ganti</span>
-                                    </button>
                                     <button type="button" onclick="removeItemPhoto()" 
-                                        class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200/70 dark:border-rose-800/60 transition-colors" title="Hapus Foto">
+                                        class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200/70 dark:border-rose-800/60 transition-colors shrink-0" title="Hapus Foto">
                                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-1.5">
+                                    <button type="button" onclick="openCameraPhotoInput()" 
+                                        class="py-1.5 px-2 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-300 border border-rose-200/70 dark:border-rose-800/60 text-[11px] font-semibold inline-flex items-center justify-center gap-1 transition-colors">
+                                        <i data-lucide="camera" class="w-3 h-3"></i>
+                                        <span>Foto Ulang</span>
+                                    </button>
+                                    <button type="button" onclick="document.getElementById('item-photo-gallery').click()" 
+                                        class="py-1.5 px-2 rounded-lg bg-white dark:bg-slate-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 border border-slate-200 dark:border-slate-600 text-[11px] font-semibold inline-flex items-center justify-center gap-1 transition-colors">
+                                        <i data-lucide="image" class="w-3 h-3"></i>
+                                        <span>Dari Galeri</span>
                                     </button>
                                 </div>
                             </div>
@@ -836,6 +847,39 @@
         </div>
     </div>
 
+    <!-- ===================================================================== -->
+    <!-- MODAL 4: WEBCAM CAPTURE UNTUK DESKTOP / BROWSER TANPA NATIVE CAMERA   -->
+    <!-- ===================================================================== -->
+    <div id="webcam-photo-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/75 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950 text-rose-500 flex items-center justify-center">
+                        <i data-lucide="camera" class="w-4 h-4"></i>
+                    </div>
+                    <h3 class="font-bold text-sm text-slate-900 dark:text-white">Ambil Foto Barang</h3>
+                </div>
+                <button onclick="closeWebcamPhotoModal()" class="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-4 space-y-3">
+                <div class="rounded-2xl overflow-hidden bg-slate-950 aspect-[4/3] flex items-center justify-center relative">
+                    <video id="webcam-video" autoplay playsinline class="w-full h-full object-cover"></video>
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" onclick="captureWebcamSnapshot()" class="flex-1 py-2.5 px-4 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm">
+                        <i data-lucide="aperture" class="w-4 h-4"></i>
+                        <span>Jepret Foto</span>
+                    </button>
+                    <button type="button" onclick="closeWebcamPhotoModal()" class="py-2.5 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold">
+                        Batal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Memuat Konfigurasi Firebase Terpisah -->
     <script src="./firebase-config.js"></script>
 
@@ -889,6 +933,7 @@
         let authActionMode = 'login';
         let html5QrCode = null;
         let lastScannedProduct = null;
+        let webcamStream = null;
 
         const BUILTIN_PRODUCT_CATALOG = {
             '8711600926625': { name: 'Vaseline Intensive Care Cocoa Radiant Lotion', brand: 'Vaseline', category: 'Checklist Koper', location: 'Bagasi Tercatat', notes: 'Lotion/pelembap kulit; cek ukuran >100ml jika masuk kabin.' },
@@ -1180,35 +1225,37 @@
         }
 
         // =========================================================================
-        // 5. PHOTO UPLOAD, COMPRESSION & PREVIEW HELPERS
+        // 5. PHOTO UPLOAD (KAMERA LANGSUNG & GALERI), COMPRESSION & PREVIEW
         // =========================================================================
+        function resizeAndCompressImageSource(imgElement, maxDimension = 640, quality = 0.78) {
+            let width = imgElement.videoWidth || imgElement.naturalWidth || imgElement.width;
+            let height = imgElement.videoHeight || imgElement.naturalHeight || imgElement.height;
+
+            if (width > maxDimension || height > maxDimension) {
+                if (width > height) {
+                    height = Math.round((height * maxDimension) / width);
+                    width = maxDimension;
+                } else {
+                    width = Math.round((width * maxDimension) / height);
+                    height = maxDimension;
+                }
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(imgElement, 0, 0, width, height);
+            return canvas.toDataURL('image/jpeg', quality);
+        }
+
         function compressImageFile(file, maxDimension = 640, quality = 0.78) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     const img = new Image();
                     img.onload = () => {
-                        let width = img.width;
-                        let height = img.height;
-
-                        if (width > maxDimension || height > maxDimension) {
-                            if (width > height) {
-                                height = Math.round((height * maxDimension) / width);
-                                width = maxDimension;
-                            } else {
-                                width = Math.round((width * maxDimension) / height);
-                                height = maxDimension;
-                            }
-                        }
-
-                        const canvas = document.createElement('canvas');
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-
-                        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
-                        resolve(compressedDataUrl);
+                        resolve(resizeAndCompressImageSource(img, maxDimension, quality));
                     };
                     img.onerror = () => reject(new Error('Gagal memproses file gambar.'));
                     img.src = event.target.result;
@@ -1238,6 +1285,53 @@
             lucide.createIcons();
         }
 
+        // Membuka kamera bawaan HP (capture="environment") atau webcam modal jika di laptop/PC
+        window.openCameraPhotoInput = async function() {
+            const isMobileDevice = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isMobileDevice) {
+                document.getElementById('item-photo-camera').click();
+                return;
+            }
+
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                try {
+                    webcamStream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: { ideal: 'environment' } },
+                        audio: false
+                    });
+                    const videoEl = document.getElementById('webcam-video');
+                    videoEl.srcObject = webcamStream;
+                    openModal('webcam-photo-modal');
+                    return;
+                } catch (err) {
+                    console.warn("Webcam tidak dapat dibuka, dialihkan ke file input kamera:", err);
+                }
+            }
+            document.getElementById('item-photo-camera').click();
+        };
+
+        window.captureWebcamSnapshot = function() {
+            const videoEl = document.getElementById('webcam-video');
+            if (!videoEl || !videoEl.videoWidth) {
+                showToast("Kamera belum siap.", "error");
+                return;
+            }
+            const compressedDataUrl = resizeAndCompressImageSource(videoEl, 640, 0.78);
+            updatePhotoPreviewUI(compressedDataUrl);
+            closeWebcamPhotoModal();
+            showToast("Foto berhasil dijepret!", "success");
+        };
+
+        window.closeWebcamPhotoModal = function() {
+            if (webcamStream) {
+                webcamStream.getTracks().forEach(track => track.stop());
+                webcamStream = null;
+            }
+            const videoEl = document.getElementById('webcam-video');
+            if (videoEl) videoEl.srcObject = null;
+            closeModal('webcam-photo-modal');
+        };
+
         window.handleItemPhotoUpload = async function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -1260,16 +1354,10 @@
         };
 
         window.removeItemPhoto = function() {
-            document.getElementById('item-photo-file').value = '';
+            document.getElementById('item-photo-camera').value = '';
+            document.getElementById('item-photo-gallery').value = '';
             updatePhotoPreviewUI('');
             showToast("Foto barang dihapus.", "info");
-        };
-
-        window.openPhotoLightbox = function(imageUrl, itemName) {
-            if (!imageUrl) return;
-            document.getElementById('lightbox-img').src = imageUrl;
-            document.getElementById('lightbox-title').textContent = itemName || 'Foto Barang';
-            openModal('photo-lightbox-modal');
         };
 
         // =========================================================================
@@ -1432,7 +1520,6 @@
             document.getElementById('item-packed').checked = Boolean(target.packed);
             document.getElementById('item-barcode').value = target.barcode || '';
 
-            // Muat foto existing agar bisa diganti atau dihapus saat mode Edit
             updatePhotoPreviewUI(target.image || '');
 
             const unitRadio = document.querySelector(`input[name="item-unit"][value="${target.unit || 'Pcs'}"]`);
@@ -1472,7 +1559,8 @@
             handleCategorySelectionChange(currentCat);
             document.getElementById('item-id').value = '';
             document.getElementById('item-barcode').value = '';
-            document.getElementById('item-photo-file').value = '';
+            document.getElementById('item-photo-camera').value = '';
+            document.getElementById('item-photo-gallery').value = '';
             updatePhotoPreviewUI('');
             document.getElementById('item-qty').value = 1;
             document.getElementById('form-title').textContent = 'Tambah Barang Manual';
@@ -1669,7 +1757,6 @@
             lucide.createIcons();
         };
 
-        // Lightbox lookup by item ID (aman untuk Base64 berukuran besar)
         window.openPhotoLightbox = function(id) {
             const target = items.find(i => i.id === id);
             if (!target || !target.image) return;
