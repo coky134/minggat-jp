@@ -286,6 +286,51 @@
                             </div>
                         </div>
 
+                        <!-- Photo Upload / Edit Section -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Foto Barang (Opsional)</label>
+                                <span class="text-[10px] text-slate-400">Otomatis dikompres</span>
+                            </div>
+
+                            <!-- Input File Tersembunyi -->
+                            <input type="file" id="item-photo-file" accept="image/*" class="hidden" onchange="handleItemPhotoUpload(event)">
+
+                            <!-- State 1: Belum ada foto -->
+                            <div id="photo-upload-placeholder" onclick="document.getElementById('item-photo-file').click()" 
+                                class="cursor-pointer rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-rose-400 p-3 flex items-center gap-3 transition-all">
+                                <div class="w-10 h-10 rounded-xl bg-white dark:bg-slate-700/80 border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-300 flex items-center justify-center shrink-0">
+                                    <i data-lucide="image-plus" class="w-4 h-4"></i>
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="text-xs font-semibold text-slate-700 dark:text-slate-200">Pilih atau Ambil Foto Barang</p>
+                                    <p class="text-[11px] text-slate-400 truncate">JPG, PNG, WEBP untuk identifikasi isi tas</p>
+                                </div>
+                            </div>
+
+                            <!-- State 2: Sudah ada foto (Preview + Tombol Ganti & Hapus) -->
+                            <div id="photo-preview-box" class="hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/70 p-2.5 flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <img id="item-photo-preview" src="" alt="Preview Barang" class="w-12 h-12 rounded-lg object-cover bg-white border border-slate-200 dark:border-slate-600 shrink-0">
+                                    <div class="min-w-0">
+                                        <p class="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">Foto terpasang</p>
+                                        <p class="text-[10px] text-slate-400">Klik ganti untuk ubah foto</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-1.5 shrink-0">
+                                    <button type="button" onclick="document.getElementById('item-photo-file').click()" 
+                                        class="px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 border border-slate-200 dark:border-slate-600 text-[11px] font-semibold inline-flex items-center gap-1 transition-colors" title="Ganti Foto">
+                                        <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                                        <span>Ganti</span>
+                                    </button>
+                                    <button type="button" onclick="removeItemPhoto()" 
+                                        class="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 border border-rose-200/70 dark:border-rose-800/60 transition-colors" title="Hapus Foto">
+                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Live Customs Alert Box -->
                         <div id="live-customs-alert" class="hidden rounded-2xl p-3.5 text-xs border transition-all">
                             <div class="flex items-start gap-2.5">
@@ -774,6 +819,23 @@
         </div>
     </div>
 
+    <!-- ===================================================================== -->
+    <!-- MODAL 3: LIGHTBOX PREVIEW FOTO BARANG                                 -->
+    <!-- ===================================================================== -->
+    <div id="photo-lightbox-modal" onclick="closeModal('photo-lightbox-modal')" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+        <div onclick="event.stopPropagation()" class="bg-white dark:bg-slate-900 rounded-3xl p-3 sm:p-4 max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl space-y-3">
+            <div class="flex items-center justify-between px-1">
+                <h4 id="lightbox-title" class="font-bold text-sm text-slate-900 dark:text-white truncate">Foto Barang</h4>
+                <button onclick="closeModal('photo-lightbox-modal')" class="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <div class="rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-950 flex items-center justify-center">
+                <img id="lightbox-img" src="" alt="Preview Penuh" class="max-h-[70vh] w-auto object-contain">
+            </div>
+        </div>
+    </div>
+
     <!-- Memuat Konfigurasi Firebase Terpisah -->
     <script src="./firebase-config.js"></script>
 
@@ -1118,7 +1180,100 @@
         }
 
         // =========================================================================
-        // 5. CRUD OPERATIONS & SMART CATEGORY AUTO-BAG ROUTING
+        // 5. PHOTO UPLOAD, COMPRESSION & PREVIEW HELPERS
+        // =========================================================================
+        function compressImageFile(file, maxDimension = 640, quality = 0.78) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > maxDimension || height > maxDimension) {
+                            if (width > height) {
+                                height = Math.round((height * maxDimension) / width);
+                                width = maxDimension;
+                            } else {
+                                width = Math.round((width * maxDimension) / height);
+                                height = maxDimension;
+                            }
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+                        resolve(compressedDataUrl);
+                    };
+                    img.onerror = () => reject(new Error('Gagal memproses file gambar.'));
+                    img.src = event.target.result;
+                };
+                reader.onerror = () => reject(new Error('Gagal membaca file gambar.'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function updatePhotoPreviewUI(imageUrl) {
+            const placeholderEl = document.getElementById('photo-upload-placeholder');
+            const previewBoxEl = document.getElementById('photo-preview-box');
+            const previewImgEl = document.getElementById('item-photo-preview');
+            const hiddenInputEl = document.getElementById('item-image');
+
+            hiddenInputEl.value = imageUrl || '';
+
+            if (imageUrl && imageUrl.trim()) {
+                previewImgEl.src = imageUrl;
+                placeholderEl.classList.add('hidden');
+                previewBoxEl.classList.remove('hidden');
+            } else {
+                previewImgEl.src = '';
+                previewBoxEl.classList.add('hidden');
+                placeholderEl.classList.remove('hidden');
+            }
+            lucide.createIcons();
+        }
+
+        window.handleItemPhotoUpload = async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                showToast("Harap pilih file gambar (JPG, PNG, WEBP).", "error");
+                return;
+            }
+
+            try {
+                const compressedBase64 = await compressImageFile(file, 640, 0.78);
+                updatePhotoPreviewUI(compressedBase64);
+                showToast("Foto barang berhasil dipasang!", "success");
+            } catch (err) {
+                console.error(err);
+                showToast("Gagal memproses foto barang.", "error");
+            } finally {
+                e.target.value = '';
+            }
+        };
+
+        window.removeItemPhoto = function() {
+            document.getElementById('item-photo-file').value = '';
+            updatePhotoPreviewUI('');
+            showToast("Foto barang dihapus.", "info");
+        };
+
+        window.openPhotoLightbox = function(imageUrl, itemName) {
+            if (!imageUrl) return;
+            document.getElementById('lightbox-img').src = imageUrl;
+            document.getElementById('lightbox-title').textContent = itemName || 'Foto Barang';
+            openModal('photo-lightbox-modal');
+        };
+
+        // =========================================================================
+        // 6. CRUD OPERATIONS & SMART CATEGORY AUTO-BAG ROUTING
         // =========================================================================
         function loadLocalItems() {
             try {
@@ -1132,12 +1287,15 @@
         }
 
         function persistLocalItems() {
-            localStorage.setItem(LOCAL_STORAGE_ITEMS_KEY, JSON.stringify(items));
+            try {
+                localStorage.setItem(LOCAL_STORAGE_ITEMS_KEY, JSON.stringify(items));
+            } catch (err) {
+                showToast("Penyimpanan lokal penuh. Hapus beberapa foto lama atau login ke Cloud.", "error");
+            }
             renderItems();
             updateStats();
         }
 
-        // Otomatis menyesuaikan Lokasi Tas (Kabin vs Bagasi Koper) saat memilih kategori tas
         window.handleCategorySelectionChange = function(selectedCat) {
             if (selectedCat === 'Checklist Tas Ransel' || selectedCat === 'Checklist Tas Selempang') {
                 const kabinRadio = document.querySelector('input[name="bag-location"][value="Kabin"]');
@@ -1272,8 +1430,10 @@
             document.getElementById('item-qty').value = target.qty || 1;
             document.getElementById('item-notes').value = target.notes || '';
             document.getElementById('item-packed').checked = Boolean(target.packed);
-            document.getElementById('item-image').value = target.image || '';
             document.getElementById('item-barcode').value = target.barcode || '';
+
+            // Muat foto existing agar bisa diganti atau dihapus saat mode Edit
+            updatePhotoPreviewUI(target.image || '');
 
             const unitRadio = document.querySelector(`input[name="item-unit"][value="${target.unit || 'Pcs'}"]`);
             if (unitRadio) unitRadio.checked = true;
@@ -1281,7 +1441,7 @@
             const locRadio = document.querySelector(`input[name="bag-location"][value="${target.location || 'Bagasi Tercatat'}"]`);
             if (locRadio) locRadio.checked = true;
 
-            document.getElementById('form-title').textContent = 'Edit Barang Bawaan';
+            document.getElementById('form-title').textContent = 'Edit Barang & Foto';
             document.getElementById('save-btn').innerHTML = `<i data-lucide="save" class="w-4 h-4"></i><span>Simpan Perubahan</span>`;
             document.getElementById('cancel-edit-btn').classList.remove('hidden');
 
@@ -1311,8 +1471,9 @@
             document.getElementById('item-category').value = currentCat;
             handleCategorySelectionChange(currentCat);
             document.getElementById('item-id').value = '';
-            document.getElementById('item-image').value = '';
             document.getElementById('item-barcode').value = '';
+            document.getElementById('item-photo-file').value = '';
+            updatePhotoPreviewUI('');
             document.getElementById('item-qty').value = 1;
             document.getElementById('form-title').textContent = 'Tambah Barang Manual';
             document.getElementById('save-btn').innerHTML = `<i data-lucide="check" class="w-4 h-4"></i><span>Simpan ke Daftar</span>`;
@@ -1373,7 +1534,7 @@
         };
 
         // =========================================================================
-        // 6. RENDERING, FILTERING & EXPORT (EXCEL / PDF)
+        // 7. RENDERING, FILTERING & EXPORT (EXCEL / PDF)
         // =========================================================================
         window.setCategoryFilter = function(cat) {
             activeCategory = cat;
@@ -1444,7 +1605,9 @@
                 }
 
                 const imgHtml = item.image
-                    ? `<img src="${escapeHtml(item.image)}" onerror="this.style.display='none'" alt="" class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover border border-slate-200 dark:border-slate-700 shrink-0">`
+                    ? `<button type="button" onclick="openPhotoLightbox('${item.id}')" class="relative group shrink-0 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 focus:outline-none" title="Klik untuk perbesar foto">
+                         <img src="${escapeHtml(item.image)}" onerror="this.parentElement.style.display='none'" alt="${escapeHtml(item.name)}" class="w-12 h-12 sm:w-14 sm:h-14 object-cover group-hover:scale-105 transition-transform">
+                       </button>`
                     : '';
 
                 return `
@@ -1491,7 +1654,7 @@
 
                         <!-- Edit & Delete -->
                         <div class="flex items-center gap-1">
-                            <button onclick="editItem('${item.id}')" class="p-2 sm:p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-indigo-500 transition-colors" title="Edit">
+                            <button onclick="editItem('${item.id}')" class="p-2 sm:p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-indigo-500 transition-colors" title="Edit Barang & Foto">
                                 <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                             </button>
                             <button onclick="deleteItem('${item.id}')" class="p-2 sm:p-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/50 text-slate-400 hover:text-rose-500 transition-colors" title="Hapus">
@@ -1504,6 +1667,15 @@
             }).join('');
 
             lucide.createIcons();
+        };
+
+        // Lightbox lookup by item ID (aman untuk Base64 berukuran besar)
+        window.openPhotoLightbox = function(id) {
+            const target = items.find(i => i.id === id);
+            if (!target || !target.image) return;
+            document.getElementById('lightbox-img').src = target.image;
+            document.getElementById('lightbox-title').textContent = target.name || 'Foto Barang';
+            openModal('photo-lightbox-modal');
         };
 
         window.exportToExcel = function() {
@@ -1567,7 +1739,6 @@
             const packedCount = items.filter(i => i.packed).length;
             const dateDisplay = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
 
-            // Header Banner
             docPdf.setFillColor(15, 23, 42);
             docPdf.rect(0, 0, 210, 28, 'F');
             docPdf.setTextColor(255, 255, 255);
@@ -1658,17 +1829,13 @@
 
         window.loadSampleTemplate = async function() {
             const samples = [
-                // Checklist Tas Selempang
                 { name: 'Paspor, Tiket Pesawat & QR Visit Japan Web', category: 'Checklist Tas Selempang', qty: 1, unit: 'Pack', location: 'Kabin', notes: 'Wajib mudah dijangkau saat imigrasi & bea cukai', packed: true },
                 { name: 'Dompet Tunai Yen (¥), Kartu & Pulpen Hitam', category: 'Checklist Tas Selempang', qty: 1, unit: 'Pcs', location: 'Kabin', notes: 'Pulpen untuk mengisi formulir darurat di pesawat', packed: false },
-                // Checklist Tas Ransel
                 { name: 'Laptop & Charger + Kabel Data HP', category: 'Checklist Tas Ransel', qty: 1, unit: 'Pack', location: 'Kabin', notes: 'Mudah dikeluarkan saat pemeriksaan X-Ray bandara', packed: false },
                 { name: 'Powerbank 10.000mAh', category: 'Checklist Tas Ransel', qty: 1, unit: 'Pcs', location: 'Kabin', notes: 'Wajib masuk tas kabin pesawat (dilarang di bagasi koper)', packed: false },
-                // Checklist Koper
                 { name: 'Pakaian Harian, Kaos & Celana Panjang', category: 'Checklist Koper', qty: 5, unit: 'Pcs', location: 'Bagasi Tercatat', notes: 'Gunakan compression bag agar hemat ruang koper', packed: false },
                 { name: 'Peralatan Mandi & Vaseline Lotion 200ml', category: 'Checklist Koper', qty: 1, unit: 'Pack', location: 'Bagasi Tercatat', notes: 'Cairan/lotion >100ml wajib di bagasi koper', packed: false },
                 { name: 'Indomie Goreng (Kemasan Pabrik)', category: 'Checklist Koper', qty: 1, unit: 'Pack', location: 'Bagasi Tercatat', notes: 'Bumbu bubuk tanpa daging asli, aman dibawa', packed: false },
-                // Checklist Tambahan Musim Dingin
                 { name: 'Jaket Tebal / Winter Coat & Sweater', category: 'Checklist Tambahan Musim Dingin', qty: 2, unit: 'Pcs', location: 'Bagasi Tercatat', notes: 'Lapisan luar penahan angin & suhu dingin Jepang', packed: false },
                 { name: 'Long John / Baju Thermal Heattech', category: 'Checklist Tambahan Musim Dingin', qty: 3, unit: 'Pcs', location: 'Bagasi Tercatat', notes: 'Dalaman penahan panas tubuh saat suhu <10°C', packed: false },
                 { name: 'Sarung Tangan Thermal, Kupluk & Syal', category: 'Checklist Tambahan Musim Dingin', qty: 1, unit: 'Pack', location: 'Kabin', notes: 'Simpan di ransel agar bisa langsung dipakai saat mendarat', packed: false },
@@ -1704,7 +1871,7 @@
         };
 
         // =========================================================================
-        // 7. BARCODE SCANNER & OPEN FOOD / BEAUTY FACTS INTEGRATION
+        // 8. BARCODE SCANNER & OPEN FOOD / BEAUTY FACTS INTEGRATION
         // =========================================================================
         window.openScannerModal = function() {
             openModal('scanner-modal');
@@ -1973,7 +2140,7 @@
         };
 
         // =========================================================================
-        // 8. UI HELPERS (MODALS, THEME, TOASTS)
+        // 9. UI HELPERS (MODALS, THEME, TOASTS)
         // =========================================================================
         window.openModal = function(modalId) {
             const el = document.getElementById(modalId);
@@ -2037,7 +2204,7 @@
         }
 
         // =========================================================================
-        // 9. BOOTSTRAP APPLICATION
+        // 10. BOOTSTRAP APPLICATION
         // =========================================================================
         initTheme();
         lucide.createIcons();
