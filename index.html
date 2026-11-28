@@ -276,38 +276,11 @@
                         <input type="hidden" id="item-image" value="">
                         <input type="hidden" id="item-barcode" value="">
 
-                        <!-- Upload / Ambil Foto Barang -->
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Foto Barang (Opsional)</label>
-                            <div class="flex items-center gap-3">
-                                <img id="item-photo-preview" src="https://placehold.co/80x80/e2e8f0/475569?text=Foto" alt="Preview"
-                                    class="w-14 h-14 rounded-xl object-cover border border-slate-200 dark:border-slate-700 bg-slate-100 shrink-0">
-                                <div class="flex flex-wrap gap-2 flex-1">
-                                    <!-- Buka Kamera HP Langsung -->
-                                    <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200/70 dark:border-rose-800/60 text-xs font-semibold transition-colors">
-                                        <i data-lucide="camera" class="w-3.5 h-3.5"></i>
-                                        <span>Kamera</span>
-                                        <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleManualPhotoUpload(event)">
-                                    </label>
-                                    <!-- Buka Galeri / File Manager -->
-                                    <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors">
-                                        <i data-lucide="image" class="w-3.5 h-3.5"></i>
-                                        <span>Galeri</span>
-                                        <input type="file" accept="image/*" class="hidden" onchange="handleManualPhotoUpload(event)">
-                                    </label>
-                                    <!-- Hapus Foto -->
-                                    <button type="button" id="remove-item-photo-btn" onclick="clearManualPhoto()" class="hidden px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-rose-500">
-                                        Hapus
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
                         <!-- Item Name -->
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Nama Barang / Produk <span class="text-rose-500">*</span></label>
                             <div class="relative">
-                                <input type="text" id="item-name" required placeholder="Contoh: Paspor, Vaseline, Rokok, Powerbank..." 
+                                <input type="text" id="item-name" required placeholder="Contoh: Paspor, Heattech, Vaseline, Powerbank..." 
                                     oninput="liveCheckCustoms(this.value)"
                                     class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-500 transition-all">
                             </div>
@@ -328,14 +301,22 @@
                         <div class="space-y-3">
                             <div>
                                 <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Kategori</label>
-                                <select id="item-category" onchange="liveCheckCustoms(document.getElementById('item-name').value)"
+                                <select id="item-category" onchange="handleCategorySelectionChange(this.value)"
                                     class="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-500">
-                                    <option value="Makanan & Minuman">🍱 Makanan & Minuman</option>
-                                    <option value="Dokumen & Paspor">🛂 Dokumen & Paspor</option>
-                                    <option value="Pakaian">🧥 Pakaian</option>
-                                    <option value="Elektronik">🔌 Elektronik</option>
-                                    <option value="Obat-obatan">💊 Obat-obatan</option>
-                                    <option value="Lainnya">🎒 Lainnya</option>
+                                    <optgroup label="Checklist Berdasarkan Tas & Musim">
+                                        <option value="Checklist Koper">🧳 Checklist Koper</option>
+                                        <option value="Checklist Tas Ransel">🎒 Checklist Tas Ransel</option>
+                                        <option value="Checklist Tas Selempang">👝 Checklist Tas Selempang</option>
+                                        <option value="Checklist Tambahan Musim Dingin">❄️ Checklist Tambahan Musim Dingin</option>
+                                    </optgroup>
+                                    <optgroup label="Kategori Jenis Barang">
+                                        <option value="Makanan & Minuman">🍱 Makanan & Minuman</option>
+                                        <option value="Dokumen & Paspor">🛂 Dokumen & Paspor</option>
+                                        <option value="Pakaian">🧥 Pakaian</option>
+                                        <option value="Elektronik">🔌 Elektronik</option>
+                                        <option value="Obat-obatan">💊 Obat-obatan</option>
+                                        <option value="Lainnya">📦 Lainnya</option>
+                                    </optgroup>
                                 </select>
                             </div>
 
@@ -385,14 +366,14 @@
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Lokasi Penyimpanan</label>
                             <div class="grid grid-cols-2 gap-2.5">
                                 <label class="cursor-pointer">
-                                    <input type="radio" name="bag-location" value="Kabin" checked class="peer sr-only" onchange="liveCheckCustoms(document.getElementById('item-name').value)">
+                                    <input type="radio" name="bag-location" value="Kabin" class="peer sr-only" onchange="liveCheckCustoms(document.getElementById('item-name').value)">
                                     <div class="px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 peer-checked:border-rose-500 peer-checked:bg-rose-50/70 dark:peer-checked:bg-rose-950/30 peer-checked:text-rose-600 dark:peer-checked:text-rose-400 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all">
                                         <i data-lucide="backpack" class="w-3.5 h-3.5"></i>
                                         <span>Tas Kabin</span>
                                     </div>
                                 </label>
                                 <label class="cursor-pointer">
-                                    <input type="radio" name="bag-location" value="Bagasi Tercatat" class="peer sr-only" onchange="liveCheckCustoms(document.getElementById('item-name').value)">
+                                    <input type="radio" name="bag-location" value="Bagasi Tercatat" checked class="peer sr-only" onchange="liveCheckCustoms(document.getElementById('item-name').value)">
                                     <div class="px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 peer-checked:border-indigo-500 peer-checked:bg-indigo-50/70 dark:peer-checked:bg-indigo-950/30 peer-checked:text-indigo-600 dark:peer-checked:text-indigo-400 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all">
                                         <i data-lucide="briefcase" class="w-3.5 h-3.5"></i>
                                         <span>Bagasi Koper</span>
@@ -404,8 +385,8 @@
                         <!-- Notes -->
                         <div>
                             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Catatan Tambahan</label>
-                            <textarea id="item-notes" rows="2" placeholder="Contoh: Kemasan botol 150ml, 10 bungkus rokok, resep dokter..."
-                                oninput="liveCheckCustoms(this.value)"
+                            <textarea id="item-notes" rows="2" placeholder="Contoh: Kemasan botol 150ml, sarung tangan thermal, resep dokter..."
+                                oninput="liveCheckCustoms(document.getElementById('item-name').value)"
                                 class="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs focus:outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-500"></textarea>
                         </div>
 
@@ -488,6 +469,18 @@
                         <button onclick="setCategoryFilter('Semua')" data-cat="Semua" class="cat-pill active px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-900 text-white dark:bg-white dark:text-slate-900 transition-all whitespace-nowrap">
                             Semua
                         </button>
+                        <button onclick="setCategoryFilter('Checklist Koper')" data-cat="Checklist Koper" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap">
+                            🧳 Checklist Koper
+                        </button>
+                        <button onclick="setCategoryFilter('Checklist Tas Ransel')" data-cat="Checklist Tas Ransel" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap">
+                            🎒 Checklist Tas Ransel
+                        </button>
+                        <button onclick="setCategoryFilter('Checklist Tas Selempang')" data-cat="Checklist Tas Selempang" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap">
+                            👝 Checklist Tas Selempang
+                        </button>
+                        <button onclick="setCategoryFilter('Checklist Tambahan Musim Dingin')" data-cat="Checklist Tambahan Musim Dingin" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap">
+                            ❄️ Checklist Tambahan Musim Dingin
+                        </button>
                         <button onclick="setCategoryFilter('Makanan & Minuman')" data-cat="Makanan & Minuman" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap">
                             🍱 Makanan & Minuman
                         </button>
@@ -504,7 +497,7 @@
                             💊 Obat-obatan
                         </button>
                         <button onclick="setCategoryFilter('Lainnya')" data-cat="Lainnya" class="cat-pill px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all whitespace-nowrap">
-                            🎒 Lainnya
+                            📦 Lainnya
                         </button>
                     </div>
                 </div>
@@ -521,7 +514,7 @@
                     </div>
                     <h3 class="font-bold text-base text-slate-900 dark:text-white">Daftar Barang Masih Kosong</h3>
                     <p class="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto mt-1.5 leading-relaxed">
-                        Tambahkan barang secara manual di panel samping, pindai barcode makanan/kosmetik, atau muat template barang wajib ke Jepang.
+                        Tambahkan barang ke kategori Koper, Tas Ransel, Tas Selempang, Musim Dingin, atau muat template bawaan ke Jepang.
                     </p>
                     <div class="mt-5 flex flex-wrap items-center justify-center gap-2.5">
                         <button onclick="openScannerModal()" class="px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-sm">
@@ -625,32 +618,26 @@
                         </div>
                     </div>
 
-                    <!-- Ganti / Ambil Foto Produk Manual saat Tidak Terdaftar -->
-                    <div class="flex items-center gap-2 pt-1">
-                        <label class="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-rose-500 text-[11px] font-semibold text-slate-700 dark:text-slate-300 transition-colors">
-                            <i data-lucide="camera" class="w-3.5 h-3.5 text-rose-500"></i>
-                            <span>Foto Kamera</span>
-                            <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleScannedPhotoUpload(event)">
-                        </label>
-                        <label class="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-indigo-500 text-[11px] font-semibold text-slate-700 dark:text-slate-300 transition-colors">
-                            <i data-lucide="image" class="w-3.5 h-3.5 text-indigo-500"></i>
-                            <span>Pilih dari Galeri</span>
-                            <input type="file" accept="image/*" class="hidden" onchange="handleScannedPhotoUpload(event)">
-                        </label>
-                    </div>
-
                     <!-- Category & Bag Selector for Scanned Item -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
                             <label class="block text-[10px] font-semibold text-slate-500 mb-1">Kategori</label>
-                            <select id="scan-item-category" onchange="updateScannedProductName(document.getElementById('scan-prod-name-input').value)"
+                            <select id="scan-item-category" onchange="handleScanCategoryChange(this.value)"
                                 class="w-full px-2.5 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[11px] font-semibold focus:outline-none focus:border-rose-500">
+                                <optgroup label="Checklist Tas & Musim">
+                                    <option value="Checklist Koper">🧳 Checklist Koper</option>
+                                    <option value="Checklist Tas Ransel">🎒 Checklist Tas Ransel</option>
+                                    <option value="Checklist Tas Selempang">👝 Checklist Tas Selempang</option>
+                                    <option value="Checklist Tambahan Musim Dingin">❄️ Checklist Tambahan Musim Dingin</option>
+                                </optgroup>
+                                <optgroup label="Jenis Barang">
                                     <option value="Makanan & Minuman">🍱 Makanan & Minuman</option>
                                     <option value="Dokumen & Paspor">🛂 Dokumen & Paspor</option>
                                     <option value="Pakaian">🧥 Pakaian</option>
                                     <option value="Elektronik">🔌 Elektronik</option>
                                     <option value="Obat-obatan">💊 Obat-obatan</option>
-                                    <option value="Lainnya">🎒 Lainnya</option>
+                                    <option value="Lainnya">📦 Lainnya</option>
+                                </optgroup>
                             </select>
                         </div>
                         <div>
@@ -841,11 +828,10 @@
         let html5QrCode = null;
         let lastScannedProduct = null;
 
-        // Katalog produk umum & populer (termasuk varian Vaseline & Rokok/Tembakau) sebagai fallback cepat
         const BUILTIN_PRODUCT_CATALOG = {
-            '8711600926625': { name: 'Vaseline Intensive Care Cocoa Radiant Lotion', brand: 'Vaseline', category: 'Lainnya', location: 'Bagasi Tercatat', notes: 'Lotion/pelembap kulit; cek ukuran >100ml jika masuk kabin.' },
-            '8999999000112': { name: 'Vaseline Petroleum Jelly Original', brand: 'Vaseline', category: 'Lainnya', location: 'Kabin', notes: 'Petroleum jelly/salep; pastikan wadah <=100g untuk kabin.' },
-            '8999999000228': { name: 'Rokok Kretek / Filter (1 Bungkus)', brand: 'Tembakau / Rokok', category: 'Lainnya', location: 'Bagasi Tercatat', notes: 'Batas bebas cukai Jepang maks 200 batang (10 bungkus) untuk usia 20+.' }
+            '8711600926625': { name: 'Vaseline Intensive Care Cocoa Radiant Lotion', brand: 'Vaseline', category: 'Checklist Koper', location: 'Bagasi Tercatat', notes: 'Lotion/pelembap kulit; cek ukuran >100ml jika masuk kabin.' },
+            '8999999000112': { name: 'Vaseline Petroleum Jelly Original', brand: 'Vaseline', category: 'Checklist Tambahan Musim Dingin', location: 'Kabin', notes: 'Pelembap bibir & kulit kering musim dingin; pastikan <=100g untuk kabin.' },
+            '8999999000228': { name: 'Rokok Kretek / Filter (1 Bungkus)', brand: 'Tembakau / Rokok', category: 'Checklist Koper', location: 'Bagasi Tercatat', notes: 'Batas bebas cukai Jepang maks 200 batang (10 bungkus) untuk usia 20+.' }
         };
 
         // =========================================================================
@@ -853,7 +839,6 @@
         // =========================================================================
         function analyzeCustomsRule(name = '', category = '', location = '', notes = '') {
             const rawText = `${name} ${category} ${notes}`.toLowerCase();
-            // Abaikan kata daging jika hanya perisa sintetik / buatan
             const text = rawText.replace(/perisa\s+(sintetik|buatan)\s+(ayam|sapi)/gi, '');
 
             const meatKeywords = [
@@ -885,8 +870,8 @@
             if (batteryKeywords.some(k => text.includes(k)) && location === 'Bagasi Tercatat') {
                 return {
                     level: 'danger',
-                    title: 'Wajib Masuk Tas Kabin!',
-                    reason: 'Powerbank, baterai lithium cadangan, dan rokok elektrik DILARANG keras dimasukkan ke dalam bagasi koper tercatat. Pindahkan ke Tas Kabin.'
+                    title: 'Wajib Masuk Tas Kabin / Ransel!',
+                    reason: 'Powerbank, baterai lithium cadangan, dan rokok elektrik DILARANG keras dimasukkan ke dalam koper bagasi tercatat. Pindahkan ke Tas Kabin (Ransel/Selempang).'
                 };
             }
 
@@ -1133,7 +1118,7 @@
         }
 
         // =========================================================================
-        // 5. CRUD OPERATIONS (LOCAL & FIRESTORE)
+        // 5. CRUD OPERATIONS & SMART CATEGORY AUTO-BAG ROUTING
         // =========================================================================
         function loadLocalItems() {
             try {
@@ -1152,6 +1137,28 @@
             updateStats();
         }
 
+        // Otomatis menyesuaikan Lokasi Tas (Kabin vs Bagasi Koper) saat memilih kategori tas
+        window.handleCategorySelectionChange = function(selectedCat) {
+            if (selectedCat === 'Checklist Tas Ransel' || selectedCat === 'Checklist Tas Selempang') {
+                const kabinRadio = document.querySelector('input[name="bag-location"][value="Kabin"]');
+                if (kabinRadio) kabinRadio.checked = true;
+            } else if (selectedCat === 'Checklist Koper' || selectedCat === 'Checklist Tambahan Musim Dingin') {
+                const bagasiRadio = document.querySelector('input[name="bag-location"][value="Bagasi Tercatat"]');
+                if (bagasiRadio) bagasiRadio.checked = true;
+            }
+            liveCheckCustoms(document.getElementById('item-name').value);
+        };
+
+        window.handleScanCategoryChange = function(selectedCat) {
+            const locSelect = document.getElementById('scan-item-location');
+            if (selectedCat === 'Checklist Tas Ransel' || selectedCat === 'Checklist Tas Selempang') {
+                locSelect.value = 'Kabin';
+            } else if (selectedCat === 'Checklist Koper' || selectedCat === 'Checklist Tambahan Musim Dingin') {
+                locSelect.value = 'Bagasi Tercatat';
+            }
+            updateScannedProductName(document.getElementById('scan-prod-name-input').value);
+        };
+
         window.handleSaveItem = async function(e) {
             e.preventDefault();
             const idInput = document.getElementById('item-id').value;
@@ -1161,7 +1168,7 @@
             const unitEl = document.querySelector('input[name="item-unit"]:checked');
             const unit = unitEl ? unitEl.value : 'Pcs';
             const locationEl = document.querySelector('input[name="bag-location"]:checked');
-            const location = locationEl ? locationEl.value : 'Kabin';
+            const location = locationEl ? locationEl.value : 'Bagasi Tercatat';
             const notes = document.getElementById('item-notes').value.trim();
             const packed = document.getElementById('item-packed').checked;
             const image = document.getElementById('item-image').value || '';
@@ -1268,20 +1275,10 @@
             document.getElementById('item-image').value = target.image || '';
             document.getElementById('item-barcode').value = target.barcode || '';
 
-            const previewEl = document.getElementById('item-photo-preview');
-            const removeBtn = document.getElementById('remove-item-photo-btn');
-            if (target.image) {
-                previewEl.src = target.image;
-                removeBtn.classList.remove('hidden');
-            } else {
-                previewEl.src = 'https://placehold.co/80x80/e2e8f0/475569?text=Foto';
-                removeBtn.classList.add('hidden');
-            }
-
             const unitRadio = document.querySelector(`input[name="item-unit"][value="${target.unit || 'Pcs'}"]`);
             if (unitRadio) unitRadio.checked = true;
 
-            const locRadio = document.querySelector(`input[name="bag-location"][value="${target.location || 'Kabin'}"]`);
+            const locRadio = document.querySelector(`input[name="bag-location"][value="${target.location || 'Bagasi Tercatat'}"]`);
             if (locRadio) locRadio.checked = true;
 
             document.getElementById('form-title').textContent = 'Edit Barang Bawaan';
@@ -1309,11 +1306,13 @@
         };
 
         window.resetForm = function() {
+            const currentCat = document.getElementById('item-category').value;
             document.getElementById('item-form').reset();
+            document.getElementById('item-category').value = currentCat;
+            handleCategorySelectionChange(currentCat);
             document.getElementById('item-id').value = '';
             document.getElementById('item-image').value = '';
             document.getElementById('item-barcode').value = '';
-            clearManualPhoto();
             document.getElementById('item-qty').value = 1;
             document.getElementById('form-title').textContent = 'Tambah Barang Manual';
             document.getElementById('save-btn').innerHTML = `<i data-lucide="check" class="w-4 h-4"></i><span>Simpan ke Daftar</span>`;
@@ -1388,6 +1387,22 @@
             renderItems();
         };
 
+        function getCategoryBadgeStyle(category) {
+            if (category === 'Checklist Tambahan Musim Dingin') {
+                return 'bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200/70 dark:border-sky-800/60';
+            }
+            if (category === 'Checklist Koper') {
+                return 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200/70 dark:border-indigo-800/60';
+            }
+            if (category === 'Checklist Tas Ransel') {
+                return 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/70 dark:border-amber-800/60';
+            }
+            if (category === 'Checklist Tas Selempang') {
+                return 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/70 dark:border-rose-800/60';
+            }
+            return 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300';
+        }
+
         window.renderItems = function() {
             const listEl = document.getElementById('items-list');
             const emptyEl = document.getElementById('empty-state');
@@ -1449,7 +1464,7 @@
                             <h4 class="font-bold text-sm sm:text-base leading-snug break-words ${item.packed ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-white'}">${escapeHtml(item.name)}</h4>
                             
                             <div class="flex flex-wrap items-center gap-1.5 mt-1.5">
-                                <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">${escapeHtml(item.category)}</span>
+                                <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold ${getCategoryBadgeStyle(item.category)}">${escapeHtml(item.category)}</span>
                                 <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold ${item.location === 'Kabin' ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-300' : 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-300'}">
                                     ${item.location === 'Kabin' ? '🎒 Kabin' : '🧳 Bagasi'}
                                 </span>
@@ -1518,7 +1533,7 @@
             worksheet['!cols'] = [
                 { wch: 5 },
                 { wch: 32 },
-                { wch: 20 },
+                { wch: 28 },
                 { wch: 8 },
                 { wch: 10 },
                 { wch: 16 },
@@ -1590,10 +1605,10 @@
                 alternateRowStyles: { fillColor: [248, 250, 252] },
                 columnStyles: {
                     0: { cellWidth: 9, halign: 'center' },
-                    1: { cellWidth: 38, fontStyle: 'bold' },
-                    2: { cellWidth: 26 },
+                    1: { cellWidth: 36, fontStyle: 'bold' },
+                    2: { cellWidth: 30 },
                     3: { cellWidth: 16, halign: 'center' },
-                    4: { cellWidth: 20 },
+                    4: { cellWidth: 18 },
                     5: { cellWidth: 14, halign: 'center' },
                     6: { cellWidth: 25 },
                     7: { cellWidth: 34 }
@@ -1643,13 +1658,21 @@
 
         window.loadSampleTemplate = async function() {
             const samples = [
-                { name: 'Paspor & Visit Japan Web QR', category: 'Dokumen & Paspor', qty: 1, unit: 'Pcs', location: 'Kabin', notes: 'Simpan di tas selempang mudah dijangkau', packed: true },
-                { name: 'Powerbank 10.000mAh', category: 'Elektronik', qty: 1, unit: 'Pcs', location: 'Kabin', notes: 'Wajib dibawa ke kabin pesawat', packed: false },
-                { name: 'Indomie Goreng (Kemasan)', category: 'Makanan & Minuman', qty: 1, unit: 'Pack', location: 'Bagasi Tercatat', notes: 'Isi 5 bungkus, bumbu tidak mengandung daging asli', packed: false },
-                { name: 'Vaseline Lotion 200ml', category: 'Lainnya', qty: 1, unit: 'Pcs', location: 'Bagasi Tercatat', notes: 'Melebihi batas 100ml kabin, simpan di koper', packed: false },
-                { name: 'Rokok Kretek (1 Slop / 10 Bungkus)', category: 'Lainnya', qty: 1, unit: 'Pack', location: 'Bagasi Tercatat', notes: 'Maksimal 200 batang bebas cukai untuk usia 20+', packed: false },
-                { name: 'Jaket Heattech & Sweater', category: 'Pakaian', qty: 3, unit: 'Pcs', location: 'Bagasi Tercatat', notes: 'Untuk cuaca dingin', packed: false },
-                { name: 'Obat Pribadi & Tolak Angin', category: 'Obat-obatan', qty: 1, unit: 'Pack', location: 'Kabin', notes: 'Kemasan asli', packed: false }
+                // Checklist Tas Selempang
+                { name: 'Paspor, Tiket Pesawat & QR Visit Japan Web', category: 'Checklist Tas Selempang', qty: 1, unit: 'Pack', location: 'Kabin', notes: 'Wajib mudah dijangkau saat imigrasi & bea cukai', packed: true },
+                { name: 'Dompet Tunai Yen (¥), Kartu & Pulpen Hitam', category: 'Checklist Tas Selempang', qty: 1, unit: 'Pcs', location: 'Kabin', notes: 'Pulpen untuk mengisi formulir darurat di pesawat', packed: false },
+                // Checklist Tas Ransel
+                { name: 'Laptop & Charger + Kabel Data HP', category: 'Checklist Tas Ransel', qty: 1, unit: 'Pack', location: 'Kabin', notes: 'Mudah dikeluarkan saat pemeriksaan X-Ray bandara', packed: false },
+                { name: 'Powerbank 10.000mAh', category: 'Checklist Tas Ransel', qty: 1, unit: 'Pcs', location: 'Kabin', notes: 'Wajib masuk tas kabin pesawat (dilarang di bagasi koper)', packed: false },
+                // Checklist Koper
+                { name: 'Pakaian Harian, Kaos & Celana Panjang', category: 'Checklist Koper', qty: 5, unit: 'Pcs', location: 'Bagasi Tercatat', notes: 'Gunakan compression bag agar hemat ruang koper', packed: false },
+                { name: 'Peralatan Mandi & Vaseline Lotion 200ml', category: 'Checklist Koper', qty: 1, unit: 'Pack', location: 'Bagasi Tercatat', notes: 'Cairan/lotion >100ml wajib di bagasi koper', packed: false },
+                { name: 'Indomie Goreng (Kemasan Pabrik)', category: 'Checklist Koper', qty: 1, unit: 'Pack', location: 'Bagasi Tercatat', notes: 'Bumbu bubuk tanpa daging asli, aman dibawa', packed: false },
+                // Checklist Tambahan Musim Dingin
+                { name: 'Jaket Tebal / Winter Coat & Sweater', category: 'Checklist Tambahan Musim Dingin', qty: 2, unit: 'Pcs', location: 'Bagasi Tercatat', notes: 'Lapisan luar penahan angin & suhu dingin Jepang', packed: false },
+                { name: 'Long John / Baju Thermal Heattech', category: 'Checklist Tambahan Musim Dingin', qty: 3, unit: 'Pcs', location: 'Bagasi Tercatat', notes: 'Dalaman penahan panas tubuh saat suhu <10°C', packed: false },
+                { name: 'Sarung Tangan Thermal, Kupluk & Syal', category: 'Checklist Tambahan Musim Dingin', qty: 1, unit: 'Pack', location: 'Kabin', notes: 'Simpan di ransel agar bisa langsung dipakai saat mendarat', packed: false },
+                { name: 'Lip Balm & Pelembap Kulit Kering (<=100g)', category: 'Checklist Tambahan Musim Dingin', qty: 1, unit: 'Pack', location: 'Kabin', notes: 'Mencegah bibir pecah-pecah akibat udara kering musim dingin', packed: false }
             ];
 
             for (const s of samples) {
@@ -1677,7 +1700,7 @@
             if (!currentUser || !fbDb) {
                 persistLocalItems();
             }
-            showToast("Template barang bawaan ke Jepang ditambahkan!", "success");
+            showToast("Template Koper, Ransel, Selempang & Musim Dingin ditambahkan!", "success");
         };
 
         // =========================================================================
@@ -1786,22 +1809,17 @@
             try {
                 let isFound = false;
                 let prodName = '';
-                let brand = 'Merek tidak tercatat (Ketik nama produk seperti Vaseline / Rokok di atas)';
+                let brand = 'Merek tidak tercatat (Ketik nama produk di atas)';
                 let imgUrl = 'https://placehold.co/80x80/e2e8f0/475569?text=Produk';
                 let ingredientsText = '';
-                let defaultCategory = 'Makanan & Minuman';
+                let defaultCategory = 'Checklist Koper';
                 let defaultLocation = 'Bagasi Tercatat';
                 let extraNotes = '';
 
-                // 1. Cek Open Food Facts terlebih dahulu
                 let productData = await fetchFromFactApi('https://world.openfoodfacts.org', code);
 
-                // 2. Jika tidak ketemu di makanan, cek Open Beauty Facts (untuk Vaseline, skincare, kosmetik)
                 if (!productData) {
                     productData = await fetchFromFactApi('https://world.openbeautyfacts.org', code);
-                    if (productData) {
-                        defaultCategory = 'Lainnya';
-                    }
                 }
 
                 if (productData) {
@@ -1955,78 +1973,7 @@
         };
 
         // =========================================================================
-        // 8. PHOTO COMPRESSION & MANUAL/GALLERY UPLOAD HANDLERS
-        // =========================================================================
-        function compressImageFile(file, maxSize = 320, quality = 0.72) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        let width = img.width;
-                        let height = img.height;
-
-                        if (width > height && width > maxSize) {
-                            height = Math.round((height * maxSize) / width);
-                            width = maxSize;
-                        } else if (height > maxSize) {
-                            width = Math.round((width * maxSize) / height);
-                            height = maxSize;
-                        }
-
-                        const canvas = document.createElement('canvas');
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-
-                        resolve(canvas.toDataURL('image/jpeg', quality));
-                    };
-                    img.onerror = reject;
-                    img.src = event.target.result;
-                };
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
-        }
-
-        window.handleManualPhotoUpload = async function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            try {
-                const compressedBase64 = await compressImageFile(file);
-                document.getElementById('item-image').value = compressedBase64;
-                document.getElementById('item-photo-preview').src = compressedBase64;
-                document.getElementById('remove-item-photo-btn').classList.remove('hidden');
-                showToast("Foto barang berhasil dimuat!", "success");
-            } catch (err) {
-                showToast("Gagal memproses gambar.", "error");
-            }
-            e.target.value = '';
-        };
-
-        window.clearManualPhoto = function() {
-            document.getElementById('item-image').value = '';
-            document.getElementById('item-photo-preview').src = 'https://placehold.co/80x80/e2e8f0/475569?text=Foto';
-            document.getElementById('remove-item-photo-btn').classList.add('hidden');
-        };
-
-        window.handleScannedPhotoUpload = async function(e) {
-            const file = e.target.files[0];
-            if (!file || !lastScannedProduct) return;
-            try {
-                const compressedBase64 = await compressImageFile(file);
-                lastScannedProduct.image = compressedBase64;
-                document.getElementById('scan-prod-img').src = compressedBase64;
-                showToast("Foto produk diperbarui!", "success");
-            } catch (err) {
-                showToast("Gagal memproses gambar.", "error");
-            }
-            e.target.value = '';
-        };
-
-        // =========================================================================
-        // 9. UI HELPERS (MODALS, THEME, TOASTS)
+        // 8. UI HELPERS (MODALS, THEME, TOASTS)
         // =========================================================================
         window.openModal = function(modalId) {
             const el = document.getElementById(modalId);
@@ -2090,7 +2037,7 @@
         }
 
         // =========================================================================
-        // 10. BOOTSTRAP APPLICATION
+        // 9. BOOTSTRAP APPLICATION
         // =========================================================================
         initTheme();
         lucide.createIcons();
